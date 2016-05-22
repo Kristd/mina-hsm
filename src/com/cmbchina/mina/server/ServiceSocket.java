@@ -37,13 +37,17 @@ public class ServiceSocket extends IoSocket {
 		return;
 	}
 	
-	public ServiceSocket instance() {
-		if() {
-			;
+	public static ServiceSocket instance() {
+		if(m_instant == null) {
+			m_instant = new ServiceSocket();
+			return m_instant;
+		}
+		else {
+			return m_instant;
 		}
 	}
 	
-	public void init() throws Exception {
+	public boolean init() throws Exception {
 		SocketJSONConf sockConf = new SocketJSONConf();
 		sockConf.loadObject(JSONUtil.parserJSONArray(ResourceMngr.getServiceConfigData(GlobalVars.SOCKET_CFG)));
 		
@@ -62,24 +66,26 @@ public class ServiceSocket extends IoSocket {
 		setupThreadsFilter();
 		setupCodecFilter();
 		setupKeepaliveFilter();
+		
+		return true;
 	}
 	
-	private static void setupLoggerFilter() {
+	protected void setupLoggerFilter() {
 		m_acceptor.getFilterChain().addLast("logger", new LoggingFilter());
 	}
 	
-	private static void setupThreadsFilter() {
+	protected void setupThreadsFilter() {
 		m_acceptor.getFilterChain().addLast("threads", new ExecutorFilter(Executors.newCachedThreadPool()));
 	}
 	
-	private static void setupCodecFilter() {
+	protected void setupCodecFilter() {
 		PrefixedStringCodecFactory codfilter = new PrefixedStringCodecFactory(Charset.forName(GlobalVars.ENCODING));
 		codfilter.setEncoderPrefixLength(GlobalVars.CODE_PREFIX);
 		codfilter.setDecoderPrefixLength(GlobalVars.CODE_PREFIX);
 		m_acceptor.getFilterChain().addLast("codec", new ProtocolCodecFilter(codfilter));
 	}
 	
-	private static void setupKeepaliveFilter() {
+	protected void setupKeepaliveFilter() {
 		KeepAliveFilter ServKeepAliveFilterFactory = new KeepAliveFilter(new HsmKeepAliveFilterFactory(), IdleStatus.BOTH_IDLE);
 		ServKeepAliveFilterFactory.setRequestInterval(GlobalVars.ACCEPTOR_KA_INTERVAL);
 		ServKeepAliveFilterFactory.setRequestTimeout(GlobalVars.ACCEPTOR_KA_TIMEOUT);
@@ -87,12 +93,12 @@ public class ServiceSocket extends IoSocket {
 		m_acceptor.getFilterChain().addLast("keepalive", ServKeepAliveFilterFactory);
 	}
 	
-	public static void listen() throws IOException {
+	public void listen() throws IOException {
 		m_acceptor.bind(new InetSocketAddress(m_port));
 		System.out.println("[" + m_port + "]service started..");
 	}
 	
-	public static void close() {
+	public void close() {
 		if(m_acceptor != null) {
 			m_acceptor.dispose();
 		}

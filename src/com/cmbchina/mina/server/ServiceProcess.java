@@ -16,8 +16,8 @@ public class ServiceProcess {
 	}
 	
 	private static void startListener() throws Exception {
-		ServiceSocket.init();
-		ServiceSocket.listen();
+		ServiceSocket.instance().init();
+		ServiceSocket.instance().listen();
 	}
 	
 	private static void startDbService() {
