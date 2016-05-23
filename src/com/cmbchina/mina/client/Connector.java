@@ -47,8 +47,9 @@ public class Connector {
 		connector.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, 5);
 		
 		connectFuture = connector.connect(new InetSocketAddress("99.12.38.74", 82));
-		connectFuture.awaitUninterruptibly(5000);
-
+		//connectFuture.awaitUninterruptibly(5000);
+		connectFuture.addListener(new myIoFutureListner());
+		/*
 		if(connectFuture.isConnected()) {
 			System.out.println("connect succ");
 			session = connectFuture.getSession();
@@ -57,7 +58,7 @@ public class Connector {
 			System.out.println("connect failed");
 		}
 		
-		/*
+		
 		while(true) {
 			if(session == null || !session.isConnected()) {
 				

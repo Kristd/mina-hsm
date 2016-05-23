@@ -6,9 +6,12 @@ import java.util.LinkedList;
 import java.util.concurrent.Executors;
 
 import org.apache.mina.core.future.ConnectFuture;
+import org.apache.mina.core.future.IoFuture;
+import org.apache.mina.core.future.IoFutureListener;
 import org.apache.mina.core.future.ReadFuture;
 import org.apache.mina.core.future.WriteFuture;
 import org.apache.mina.core.service.IoConnector;
+import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
@@ -18,7 +21,7 @@ import org.apache.mina.filter.keepalive.KeepAliveFilter;
 import org.apache.mina.filter.logging.LoggingFilter;
 import org.apache.mina.transport.socket.nio.NioSocketConnector;
 
-import com.cmbchina.mina.abs.IoSocket;
+import com.cmbchina.mina.abstracts.IoSocket;
 import com.cmbchina.mina.enums.Status;
 import com.cmbchina.mina.filter.keepalive.HsmKeepAliveFilterFactory;
 import com.cmbchina.mina.utils.GlobalVars;
@@ -32,28 +35,55 @@ public class HsmSocket extends IoSocket {
 	private int freeCountValue = 0;
 	private int busyCount = 0;
 	private int freeCount = 0;
-	private static Object m_locker = new Object();
+	private Object m_lock = new Object();
 	private LinkedList<?> m_queue;
 	private int m_msgsize;
 	private String m_ip;
 	private int m_port;
 	private ConnectFuture m_future;
+	private int m_resptime;
+	private IoHandlerAdapter m_handler;
+	private boolean m_connected = false;
 	
-	public HsmSocket(int timeout) {
+	private class HsmSockFutureListner implements IoFutureListener {
+		@Override
+		public void operationComplete(IoFuture future) {
+			// TODO Auto-generated method stub
+			System.out.println("myIoFutureListner operationComplete");
+			if(future.getSession().isConnected()) {
+				System.out.println("connected");
+				
+	        	m_status = Status.FREE;
+	        	m_msgsize = 0;
+	        	
+	        	synchronized(m_lock) {
+	        		m_connected = true;
+	        	}
+			}
+		}
+	}
+	
+	public HsmSocket(String ip, int port, int timeout) {
+		m_ip = ip;
+		m_port = port;
 		m_timeout = timeout;
 		m_msgsize = 0;
 	}
 	
 	public boolean init() {
 		m_connector = new NioSocketConnector();
-		m_connector.setConnectTimeoutMillis(3000);
+		m_connector.setConnectTimeoutMillis(GlobalVars.TIMEOUT);
+		
+		m_connector.getSessionConfig().setReadBufferSize(GlobalVars.MAX_BUFF_SIZE);
+		m_connector.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, GlobalVars.ACCEPTOR_IDLE_TIME);
 		
 		setupLoggerFilter();
 		setupCodecFilter();
 		setupThreadsFilter();
 		setupKeepaliveFilter();
 		
-		m_connector.setHandler(new HsmSocketHandler());
+		m_handler = new HsmSocketHandler();
+		m_connector.setHandler(m_handler);
 		
 		return true;
 	}
@@ -81,24 +111,34 @@ public class HsmSocket extends IoSocket {
 		m_connector.getFilterChain().addLast("keepalive", ServKeepAliveFilterFactory);
 	}
 	
-	protected int connect() {
+	protected boolean connect() {
 		m_future = m_connector.connect(new InetSocketAddress(m_ip, m_port));  
-		m_future.awaitUninterruptibly();
+		//m_future.awaitUninterruptibly();
+		m_future.addListener(new HsmSockFutureListner());
+		
+		/*
         if(m_future.isConnected()) {
-        	synchronized(m_locker) {
-        		m_status = Status.FREE;
-    		}
+        	m_status = Status.FREE;
+        	m_msgsize = 0;
         }
-	
-		return 0;
+		*/
+		
+		while(true) {
+			synchronized(m_lock) {
+				if(m_connected) {
+					return m_connected;
+				}
+			}
+		}
+		
+		//return false;
 	}
 	
 	protected int disconnect() {
-		 IoSession session = m_future.getSession();
-		 session.close(true);
-		 synchronized(m_locker)	{
-			 m_status = Status.FREE;
-		}
+		IoSession session = m_future.getSession();
+		session.close(true);
+		m_status = Status.FREE;
+		m_msgsize = 0;
 		 
 		return 0;
 	}
@@ -145,31 +185,10 @@ public class HsmSocket extends IoSocket {
          finally{
         	 endTime = System.currentTimeMillis();
         	 costTime = endTime - startTime;
-        	 calculate(costTime);
          }
 
         System.out.println("recv succ"+message.toString());
 		return message;
-	}
-	
-	protected void calculate(long cost) {
-		synchronized(m_locker) {
-			if(cost >= 8) {
-				busyCount++;
-				if(busyCount >= busyCountValue)
-				{
-					m_status = Status.BUSY;
-					freeCount=0;
-				}					
-			}
-			else {
-				freeCount++;
-				if(freeCount >= freeCountValue)	{
-					m_status = Status.FREE;
-					busyCount=0;
-				}
-			}			
-		}
 	}
 	
 	public int receive() {

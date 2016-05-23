@@ -15,7 +15,7 @@ import org.apache.mina.filter.keepalive.KeepAliveFilter;
 import org.apache.mina.filter.logging.LoggingFilter;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 
-import com.cmbchina.mina.abs.IoSocket;
+import com.cmbchina.mina.abstracts.IoSocket;
 import com.cmbchina.mina.conf.SocketJSONConf;
 import com.cmbchina.mina.filter.keepalive.HsmKeepAliveFilterFactory;
 import com.cmbchina.mina.utils.GlobalVars;
@@ -48,12 +48,12 @@ public class ServiceSocket extends IoSocket {
 	}
 	
 	public boolean init() throws Exception {
-		SocketJSONConf sockConf = new SocketJSONConf();
-		sockConf.loadObject(JSONUtil.parserJSONArray(ResourceMngr.getServiceConfigData(GlobalVars.SOCKET_CFG)));
+		SocketJSONConf sockconf = new SocketJSONConf();
+		sockconf.loadObject(JSONUtil.parserJSONArray(ResourceMngr.getServiceConfigData(GlobalVars.SOCKET_CFG)));
 		
-		m_ip = sockConf.getSocketAddr();
-		m_port = sockConf.getSocketPort();
-		m_maxConn = sockConf.getSocketMaxConn();
+		m_ip = sockconf.getSocketAddr();
+		m_port = sockconf.getSocketPort();
+		m_maxConn = sockconf.getSocketMaxConn();
 		
 		m_acceptor = new NioSocketAcceptor();
 		m_acceptor.getSessionConfig().setReadBufferSize(GlobalVars.MAX_BUFF_SIZE);

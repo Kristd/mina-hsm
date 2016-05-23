@@ -1,25 +1,26 @@
 package com.cmbchina.mina.client;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Vector;
-
+import java.util.concurrent.ConcurrentHashMap;
 import com.cmbchina.mina.conf.PoolJSONConf;
 
 
 public class HsmClientPool {
-	private static int m_totalHsm = 0;
-	private static HashMap<String, Vector<HsmClient>> m_AppGrp = new HashMap<String, Vector<HsmClient>>();
+	private int m_totalHsm = 0;
+	private static HsmClientPool m_instant = new HsmClientPool();
+	private ConcurrentHashMap<String, Vector<HsmClient>> m_AppGrp = new ConcurrentHashMap<String, Vector<HsmClient>>();
 
 	private HsmClientPool() {
 		return;
 	}
 	
-	public static void init( ) {
+	public static HsmClientPool instance() {
+		return m_instant;
+	}
+	
+	public void init( ) {
 		PoolJSONConf hsmConf = new PoolJSONConf();
 		int nAppSize = hsmConf.getAppSize();
 		String appName;
@@ -43,7 +44,7 @@ public class HsmClientPool {
 		}
 	}
 	
-	public static int start() {
+	public int start() {
 		Iterator<Entry<String, Vector<HsmClient>>> it = m_AppGrp.entrySet().iterator();
 		
 		while(it.hasNext()) {
@@ -58,7 +59,7 @@ public class HsmClientPool {
 		return 0;
 	}
 	
-	public static int size() {
+	public int size() {
 		int total = 0;
 		Iterator<Entry<String, Vector<HsmClient>>> it = m_AppGrp.entrySet().iterator();
 		

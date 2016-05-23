@@ -5,10 +5,11 @@ import org.apache.mina.core.future.IoFutureListener;
 
 
 public class myIoFutureListner implements IoFutureListener {
-
 	@Override
 	public void operationComplete(IoFuture future) {
-		// TODO Auto-generated method stub
 		System.out.println("myIoFutureListner operationComplete");
+		if(future.getSession().isConnected()) {
+			System.out.println("connected");
+		}
 	}
 }

@@ -1,12 +1,13 @@
-package com.cmbchina.mina.interf.pboc;
+package com.cmbchina.mina.interfaces.factory;
 
 import java.util.HashMap;
 
 import com.cmbchina.mina.client.HsmWork;
-import com.cmbchina.mina.client.HsmWorkMngr;
+import com.cmbchina.mina.interfaces.pboc.GenCVC;
+import com.cmbchina.mina.interfaces.pboc.VerifyCVC;
 
-public class PbocWorkMngr extends HsmWorkMngr {
-	private static PbocWorkMngr m_instant = new PbocWorkMngr();
+public class PBOCWorkMngr extends HsmWorkManager {
+	private static PBOCWorkMngr m_instant = new PBOCWorkMngr();
 	private static HashMap<String, HsmWork> m_workMap = new HashMap<String, HsmWork>();
 	
 	static{
@@ -14,7 +15,7 @@ public class PbocWorkMngr extends HsmWorkMngr {
 		VerifyCVC.register();
 	}
 	
-	public HsmWorkMngr getInstant() {
+	public HsmWorkManager instance() {
 		return m_instant;
 	}
 	

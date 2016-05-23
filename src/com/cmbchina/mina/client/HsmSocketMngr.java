@@ -1,31 +1,57 @@
 package com.cmbchina.mina.client;
 
-import java.util.concurrent.ConcurrentHashMap;
-
-import com.cmbchina.mina.enums.Status;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 
 public class HsmSocketMngr {
 	private String m_ip;
 	private int m_port;
-	private int m_conn;
+	private int m_nConn;
 	private int m_maxconn;
-	private int m_minconn;
+	private int m_minConn;
 	private int m_timeout;
-	private Status m_status;
-	
-	private ConcurrentHashMap<String, HsmSocket> m_conHashMap;
+	private String m_appname;
+	private ConcurrentLinkedQueue<HsmSocket> m_connectionQueue;
 	
 	
 	public HsmSocketMngr(String appname, String ip, int port, int timeout) {
-		;
+		m_appname = appname;
+		m_ip = ip;
+		m_port = port;
+		m_timeout = timeout;
 	}
 	
-	/**
-	 * Init all the connections
-	 * */
-	public void start() {
-		;
+	public boolean init() {
+		try {
+			for(int i = 0; i < m_minConn; i++) {
+				HsmSocket sock = new HsmSocket(m_ip, m_port, m_timeout);
+				sock.init();
+				m_connectionQueue.add(sock);
+			}
+			
+			m_nConn = m_minConn;
+			return true;
+		}
+		catch(Exception ex) {
+			return false;
+		}
+	}
+	
+	public boolean start() {
+		if(init()) {
+			try {
+				for(HsmSocket sock : m_connectionQueue){
+					sock.connect();
+				}
+				
+				return true;
+			}
+			finally {
+				dispose();
+			}
+		}
+		
+		return false;
 	}
 	
 	public int nfreeConnection() {
@@ -34,6 +60,10 @@ public class HsmSocketMngr {
 	
 	public HsmSocket getConnection() {
 		return null;
+	}
+	
+	public void dispose() {
+		;
 	}
 }
 

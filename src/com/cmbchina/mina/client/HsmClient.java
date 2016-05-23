@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.mina.core.future.ConnectFuture;
 import org.apache.mina.core.future.ReadFuture;
@@ -18,7 +19,9 @@ import org.apache.mina.filter.logging.LoggingFilter;
 import org.apache.mina.transport.socket.nio.NioSocketConnector;
 
 import com.cmbchina.mina.enums.Status;
-import com.cmbchina.mina.interf.pboc.PbocWorkMngr;
+import com.cmbchina.mina.interfaces.factory.HsmWorkManager;
+import com.cmbchina.mina.interfaces.factory.IWorkMngrFactory;
+import com.cmbchina.mina.interfaces.factory.PBOCWorkMngr;
 
 public class HsmClient {
 	private String m_ip;
@@ -32,8 +35,8 @@ public class HsmClient {
 	private String m_appName;
 	private int m_weight;
 	private final Object m_lock = new Object();
-	private PbocWorkMngr m_pbocWkMngr;
-	private HashMap<String, HsmWorkMngr> m_mngr;
+	private HsmWorkManager m_workMngr;		//should be more abstract, maybe we can use a factory mode + singleton mode
+	private IWorkMngrFactory m_workMngrFact;
 	
 	
 	protected HsmClient(String appname, String ip, int port, int timeout, int conn_num) {
@@ -43,23 +46,18 @@ public class HsmClient {
 		m_timeout = timeout;
 		m_conn = conn_num;
 		m_weight = 0;
-		m_status = Status.ERROR;
+		m_status = Status.FREE;
 		m_hsmSockMngr = new HsmSocketMngr(m_appName, m_ip, m_port, m_timeout);
-		m_mngr = new HashMap<String, HsmWorkMngr>();
+		m_workMngr = m_workMngrFact.createWorkManager(m_appName);
 	}
 	
 	public void start()	{
-		m_hsmSockMngr.start();		
-		m_status = setHsmStatus(m_hsmSockMngr.nfreeConnection());
-		
-		m_mngr.put("PBOC", m_pbocWkMngr);
+		m_hsmSockMngr.start();
 	}
-
-	/**
-	 * 
-	 * */
-	public Object process(String job, Object request) {
-		PbocWorkMngr mng = (PbocWorkMngr) m_mngr.get("PBOC");
+	
+	/*
+	public Object process(String app, String job, Object request) {
+		PBOCWorkMngr mng = (PBOCWorkMngr) m_mngr.get("PBOC");
 		return mng.doWork(job, request);
 	}
 	
@@ -72,7 +70,7 @@ public class HsmClient {
 	
 	public void send(String buffer) {
 		Object obj = null;
-		Iterator<HsmSocket> it = connPool.iterator();
+		Iterator<HsmSocket> it = m_connMngr.iterator();
 		while(it.hasNext())
 		{
 			HsmSocket conn = (HsmSocket)it.next();
@@ -130,4 +128,5 @@ public class HsmClient {
 	public String getAppName(String name) {
 		return m_appName;
 	}
+	*/
 }

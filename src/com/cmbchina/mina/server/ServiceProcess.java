@@ -11,8 +11,8 @@ public class ServiceProcess {
 	}
 	
 	private static void startHsmService() {
-		HsmClientPool.init();
-		HsmClientPool.start();
+		HsmClientPool.instance().init();
+		HsmClientPool.instance().start();
 	}
 	
 	private static void startListener() throws Exception {
