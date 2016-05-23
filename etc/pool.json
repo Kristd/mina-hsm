@@ -1,0 +1,26 @@
+[
+	[
+		"appname":"pboc",
+		{
+			"ip":"99.12.115.1",
+			"port":"8",
+			"maxconn":"5",
+			"minconn":"1"
+		},
+		{
+			"ip":"99.12.115.2",
+			"port":"8",
+			"maxconn":"5",
+			"minconn":"1"
+		}
+	],
+	[
+		"appname":"kmc",
+		{
+			"ip":"99.12.115.7",
+			"port":"8",
+			"maxconn":"5",
+			"minconn":"1"
+		}
+	]
+]
