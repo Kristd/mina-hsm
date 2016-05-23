@@ -115,7 +115,11 @@ public class HsmClientPool {
 	}
 	*/
 	
-	public Object sendAndRecv(String buffer, String appname) {
+	public Object send(String appname, Object request) {
+		return null;
+	}
+	
+	public Object recv(String appname, Object response) {
 		return null;
 	}
 }
