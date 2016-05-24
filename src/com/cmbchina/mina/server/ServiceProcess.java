@@ -8,9 +8,10 @@ import com.cmbchina.mina.utils.JSONUtil;
 
 public class ServiceProcess {
 	private static void initialize() throws IOException {
+		return;
 	}
 	
-	private static void startHsmService() {
+	private static void startHsmService() throws Exception {
 		HsmClientPool.instance().init();
 		HsmClientPool.instance().start();
 	}

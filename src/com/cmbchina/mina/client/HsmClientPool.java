@@ -1,61 +1,93 @@
 package com.cmbchina.mina.client;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.cmbchina.mina.conf.PoolJSONConf;
+import com.cmbchina.mina.server.ResourceMngr;
+import com.cmbchina.mina.utils.GlobalVars;
+import com.cmbchina.mina.utils.JSONUtil;
 
 
 public class HsmClientPool {
-	private int m_totalHsm = 0;
-	private static HsmClientPool m_instant = new HsmClientPool();
-	private ConcurrentHashMap<String, Vector<HsmClient>> m_AppGrp = new ConcurrentHashMap<String, Vector<HsmClient>>();
+	private ConcurrentHashMap<String, Vector<HsmClient>> m_AppGrp;
+	private PoolJSONConf m_hsmConf;
+	private int m_totalHsm;
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(HsmClientPool.class);
 
 	private HsmClientPool() {
-		return;
+		m_hsmConf = new PoolJSONConf();
+		m_AppGrp = new ConcurrentHashMap<String, Vector<HsmClient>>();
+		m_totalHsm = 0;
+	}
+	
+	public static class InstanceHolder {
+		static final HsmClientPool INSTANCE = new HsmClientPool();
 	}
 	
 	public static HsmClientPool instance() {
-		return m_instant;
+		return InstanceHolder.INSTANCE;
 	}
 	
-	public void init( ) {
-		PoolJSONConf hsmConf = new PoolJSONConf();
-		int nAppSize = hsmConf.getAppSize();
-		String appName;
+	public void init( ) throws Exception {
+		boolean isloaded = m_hsmConf.loadObject(JSONUtil.parserJSONArray(ResourceMngr.getServiceConfigData(GlobalVars.HSMPOOL_CFG)));
 		
+		if(!isloaded) {
+			throw new Exception("loading JSON configuration failed");
+		}
+		else {
+			LOGGER.info("HsmClientPool loading configuration");
+		}
+		
+		int nAppSize = m_hsmConf.getAppSize();
+
 		for(int i = 0; i < nAppSize; i++) {
-			appName = hsmConf.Apps(i).getAppName();
+			String appname = m_hsmConf.apps(i).getAppName();
 			Vector<HsmClient> vecHsms = new Vector<HsmClient>();
+			int nhsmCount = m_hsmConf.apps(i).getHsmSize();
 			
-			m_AppGrp.put(appName, vecHsms);
-			int nhsmCount = hsmConf.Apps(i).getHsmSize();
+			LOGGER.info("loading Application = " + appname + " HSM size = " + nhsmCount);
 			
-			for(int j = 0; j < nhsmCount; j++) {
-				String addr = hsmConf.Apps(i).HsmClinets(j).Address();
-				int port = hsmConf.Apps(i).HsmClinets(j).Port();
-				int max = hsmConf.Apps(i).HsmClinets(j).MaxConn();
-				int min = hsmConf.Apps(i).HsmClinets(j).MinConn();
+			for(int j = 1; j <= nhsmCount; j++) {
+				String ip = m_hsmConf.apps(i).HsmClinets(j).ip();
+				int port = m_hsmConf.apps(i).HsmClinets(j).port();
+				int max = m_hsmConf.apps(i).HsmClinets(j).maxConn();
+				int min = m_hsmConf.apps(i).HsmClinets(j).minConn();
+				int timeout = m_hsmConf.apps(i).HsmClinets(j).timeout();
 				
-				HsmClient client = new HsmClient(appName, addr, port, max, min);
+				HsmClient client = new HsmClient(appname, ip, port, timeout, max);
 				vecHsms.add(client);
 			}
+			LOGGER.info("HsmClientPool vev=" + vecHsms.toString());
+			m_AppGrp.put(appname, vecHsms);
 		}
+		
+		LOGGER.info("HsmClientPool init");
 	}
 	
-	public int start() {
+	public int start() throws Exception {
 		Iterator<Entry<String, Vector<HsmClient>>> it = m_AppGrp.entrySet().iterator();
 		
 		while(it.hasNext()) {
+			LOGGER.info("it.hasNext()");
 			Entry<String, Vector<HsmClient>> entry = it.next();
 			String key = (String) entry.getKey();
 			
 			for(int i = 0; i < m_AppGrp.get(key).size(); i++) {
+				LOGGER.info("m_AppGrp.get(key)=" + key);
 				m_AppGrp.get(key).get(i).start();
 			}
 		}
 		
+		LOGGER.info("HsmClientPool started");
 		return 0;
 	}
 	
@@ -115,11 +147,11 @@ public class HsmClientPool {
 	}
 	*/
 	
-	public Object send(String appname, Object request) {
+	public Object send(String buffer, String appname) {
 		return null;
 	}
 	
-	public Object recv(String appname, Object response) {
+	public Object recv() {
 		return null;
 	}
 }

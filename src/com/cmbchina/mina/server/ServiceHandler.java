@@ -15,27 +15,27 @@ public class ServiceHandler extends IoHandlerAdapter {
 
 	@Override
 	public void messageReceived(IoSession session, Object message)throws Exception {
-		
+		System.out.println("ServiceHandler messageReceived");
 	}
 	
 	@Override
     public void sessionCreated(IoSession session) throws Exception {
-        // Empty handler
+		System.out.println("ServiceHandler sessionCreated");
     }
 
 	@Override
     public void sessionOpened(IoSession session) throws Exception {
-        // Empty handler
+		System.out.println("ServiceHandler sessionOpened");
     }
 
 	@Override
     public void sessionClosed(IoSession session) throws Exception {
-        // Empty handler
+		System.out.println("ServiceHandler sessionClosed");
     }
 
 	@Override
     public void sessionIdle(IoSession session, IdleStatus status) throws Exception {
-        // Empty handler
+		System.out.println("ServiceHandler sessionIdle");
     }
 
 	@Override
@@ -45,7 +45,7 @@ public class ServiceHandler extends IoHandlerAdapter {
 
 	@Override
     public void messageSent(IoSession session, Object message) throws Exception {
-        // Empty handler
+		System.out.println("ServiceHandler messageSent");
     } 
 }
 

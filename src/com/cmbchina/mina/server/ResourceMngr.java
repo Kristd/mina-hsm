@@ -26,6 +26,7 @@ public class ResourceMngr {
 	
 	public static String getServiceConfigData(String fileName) throws Exception {
 		FileInputStream fs = null;
+		
 		try {
 			fs = new FileInputStream(new File(getServiceConfigPath() + fileName));
 			return MiscUtil.readTextFileContent(fs);

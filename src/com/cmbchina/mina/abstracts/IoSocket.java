@@ -3,7 +3,6 @@ package com.cmbchina.mina.abstracts;
 
 public abstract class IoSocket {
 	public boolean init() throws Exception {
-		;
 		return false;
 	}
 	

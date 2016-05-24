@@ -1,0 +1,26 @@
+[
+	{
+		"service":"HsmService",
+		"ip":"0.0.0.0",
+		"port":"8529",
+		"maxconn":"10",
+		"idletime":"5",
+		"buffersize":"10240"
+	},
+	{
+		"codefilter":"true",
+		"encoding":"ISO-8859-1",
+		"encodeprefix":"2",
+		"decodeprefix":"2"
+	},
+	{
+		"threadpool":"true",
+		"pooltype":"newCachedThreadPool"	
+	},	
+	{
+		"keepalive":"false",
+		"interval":"10",
+		"timeout":"5",
+		"forward":"true"
+	}
+]

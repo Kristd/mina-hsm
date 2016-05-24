@@ -17,10 +17,12 @@ import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.codec.prefixedstring.PrefixedStringCodecFactory;
 import org.apache.mina.filter.logging.LoggingFilter;
 import org.apache.mina.transport.socket.nio.NioSocketConnector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.cmbchina.mina.abstracts.HsmWorkManager;
 import com.cmbchina.mina.enums.Status;
-import com.cmbchina.mina.interfaces.factory.HsmWorkManager;
-import com.cmbchina.mina.interfaces.factory.IWorkMngrFactory;
+import com.cmbchina.mina.interfaces.factory.WorkMngrFactory;
 import com.cmbchina.mina.interfaces.factory.PBOCWorkMngr;
 
 public class HsmClient {
@@ -31,28 +33,29 @@ public class HsmClient {
 	private int m_minconn;
 	private int m_timeout;
 	private Status m_status;
-	private HsmSocketMngr m_hsmSockMngr;
-	private String m_appName;
+	private HsmSocketMngr m_sockMngr;
+	private String m_appname;
 	private int m_weight;
 	private final Object m_lock = new Object();
-	private HsmWorkManager m_workMngr;		//should be more abstract, maybe we can use a factory mode + singleton mode
-	private IWorkMngrFactory m_workMngrFact;
+	private HsmWorkManager m_workMngr;
 	
+	private static final Logger LOGGER = LoggerFactory.getLogger(HsmClient.class);
 	
-	protected HsmClient(String appname, String ip, int port, int timeout, int conn_num) {
-		m_appName = appname;
+	public HsmClient(String appname, String ip, int port, int timeout, int maxconn) {
+		m_appname = appname;
 		m_ip = ip;
 		m_port = port;
 		m_timeout = timeout;
-		m_conn = conn_num;
+		m_conn = maxconn;
 		m_weight = 0;
 		m_status = Status.FREE;
-		m_hsmSockMngr = new HsmSocketMngr(m_appName, m_ip, m_port, m_timeout);
-		m_workMngr = m_workMngrFact.createWorkManager(m_appName);
+		m_sockMngr = new HsmSocketMngr(m_appname, m_ip, m_port, m_timeout, m_conn);
+		m_workMngr = WorkMngrFactory.loadWorkManager(m_appname);
 	}
 	
-	public void start()	{
-		m_hsmSockMngr.start();
+	public void start() throws Exception	{
+		LOGGER.info("start HsmClient=" + this.toString());
+		m_sockMngr.start();
 	}
 	
 	/*

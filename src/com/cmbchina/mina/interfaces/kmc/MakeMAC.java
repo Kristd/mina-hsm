@@ -1,19 +1,18 @@
 package com.cmbchina.mina.interfaces.kmc;
 
-import com.cmbchina.mina.client.HsmWork;
+import com.cmbchina.mina.abstracts.HsmWork;
+import com.cmbchina.mina.interfaces.factory.KMCWorkMngr;
 
 public class MakeMAC implements HsmWork {
 
 	@Override
 	public Object work(Object request) {
-		// TODO Auto-generated method stub
+		System.out.println("MakeMAC work");
 		return null;
 	}
 
-	@Override
-	public void register(String appname) {
-		// TODO Auto-generated method stub
-		//use factory mode
+	public static void register() {
+		KMCWorkMngr.addWork("MakeMAC", new MakeMAC());
 	}
 
 }

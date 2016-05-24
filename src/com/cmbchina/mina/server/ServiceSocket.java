@@ -23,49 +23,58 @@ import com.cmbchina.mina.utils.JSONUtil;
 
 
 public class ServiceSocket extends IoSocket {
-	private static ServiceSocket m_instant = new ServiceSocket();
-	private static IoAcceptor m_acceptor = null;
-	private static IoHandlerAdapter m_handler = null;
+	private static IoAcceptor m_acceptor;
+	private static IoHandlerAdapter m_handler;
 	
 	private static String m_ip;
 	private static int m_port;
 	private static int m_maxConn;
 	
+	SocketJSONConf m_serviceconf;
+	
 	private static Object m_lock = new Object();
 	
+	private static class InstanceHolder {
+		static final ServiceSocket INSTANCE = new ServiceSocket();
+	}
+	
 	private ServiceSocket() {
-		return;
+		m_serviceconf = new SocketJSONConf();
+		m_acceptor = new NioSocketAcceptor();
 	}
 	
 	public static ServiceSocket instance() {
-		if(m_instant == null) {
-			m_instant = new ServiceSocket();
-			return m_instant;
-		}
-		else {
-			return m_instant;
-		}
+		return InstanceHolder.INSTANCE;
 	}
 	
 	public boolean init() throws Exception {
-		SocketJSONConf sockconf = new SocketJSONConf();
-		sockconf.loadObject(JSONUtil.parserJSONArray(ResourceMngr.getServiceConfigData(GlobalVars.SOCKET_CFG)));
+		m_serviceconf.loadObject(JSONUtil.parserJSONArray(ResourceMngr.getServiceConfigData(GlobalVars.SERVICE_CFG)));
 		
-		m_ip = sockconf.getSocketAddr();
-		m_port = sockconf.getSocketPort();
-		m_maxConn = sockconf.getSocketMaxConn();
+		m_ip = m_serviceconf.socketAddr();
+		m_port = m_serviceconf.socketPort();
+		m_maxConn = m_serviceconf.socketMaxConn();
 		
-		m_acceptor = new NioSocketAcceptor();
-		m_acceptor.getSessionConfig().setReadBufferSize(GlobalVars.MAX_BUFF_SIZE);
-		m_acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, GlobalVars.ACCEPTOR_IDLE_TIME);
+		m_acceptor.getSessionConfig().setReadBufferSize(m_serviceconf.socketBufferSize());
+		m_acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, m_serviceconf.socketIdleTime());
+		
+		if(m_serviceconf.logger()) {
+			setupLoggerFilter();
+		}
+		
+		if(m_serviceconf.threadPool()) {
+			setupThreadsFilter();
+		}
+		
+		if(m_serviceconf.codeflter()) {
+			setupCodecFilter();
+		}
+		
+		if(m_serviceconf.keepalive()) {
+			setupKeepaliveFilter();
+		}
 		
 		m_handler = new ServiceHandler();
 		m_acceptor.setHandler(m_handler);
-		
-		setupLoggerFilter();
-		setupThreadsFilter();
-		setupCodecFilter();
-		setupKeepaliveFilter();
 		
 		return true;
 	}
@@ -79,18 +88,18 @@ public class ServiceSocket extends IoSocket {
 	}
 	
 	protected void setupCodecFilter() {
-		PrefixedStringCodecFactory codfilter = new PrefixedStringCodecFactory(Charset.forName(GlobalVars.ENCODING));
-		codfilter.setEncoderPrefixLength(GlobalVars.CODE_PREFIX);
-		codfilter.setDecoderPrefixLength(GlobalVars.CODE_PREFIX);
+		PrefixedStringCodecFactory codfilter = new PrefixedStringCodecFactory(Charset.forName(m_serviceconf.codeflterEncoding()));
+		codfilter.setEncoderPrefixLength(m_serviceconf.codeflterEncodePrefix());
+		codfilter.setDecoderPrefixLength(m_serviceconf.codeflterDecodePrefix());
 		m_acceptor.getFilterChain().addLast("codec", new ProtocolCodecFilter(codfilter));
 	}
 	
 	protected void setupKeepaliveFilter() {
-		KeepAliveFilter ServKeepAliveFilterFactory = new KeepAliveFilter(new HsmKeepAliveFilterFactory(), IdleStatus.BOTH_IDLE);
-		ServKeepAliveFilterFactory.setRequestInterval(GlobalVars.ACCEPTOR_KA_INTERVAL);
-		ServKeepAliveFilterFactory.setRequestTimeout(GlobalVars.ACCEPTOR_KA_TIMEOUT);
-		ServKeepAliveFilterFactory.setForwardEvent(GlobalVars.ACCEPTOR_KA_FORWARD);
-		m_acceptor.getFilterChain().addLast("keepalive", ServKeepAliveFilterFactory);
+		KeepAliveFilter servKeepAliveFilterFactory = new KeepAliveFilter(new HsmKeepAliveFilterFactory(), IdleStatus.BOTH_IDLE);
+		servKeepAliveFilterFactory.setRequestInterval(m_serviceconf.keepaliveInterval());
+		servKeepAliveFilterFactory.setRequestTimeout(m_serviceconf.keepaliveTimeout());
+		servKeepAliveFilterFactory.setForwardEvent(m_serviceconf.keepaliveForward());
+		m_acceptor.getFilterChain().addLast("keepalive", servKeepAliveFilterFactory);
 	}
 	
 	public void listen() throws IOException {

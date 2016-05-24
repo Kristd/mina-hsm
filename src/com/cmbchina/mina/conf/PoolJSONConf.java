@@ -6,12 +6,20 @@ import com.cmbchina.mina.json.JSONObject;
 public class PoolJSONConf extends JSONConf {
 	private AppJSONArray m_apps;
 	
+	public PoolJSONConf() {
+		m_apps = new AppJSONArray();
+	}
+	
 	public class AppJSONArray {
 		public JSONArray m_AppGrps;
 		public HsmJSONObject m_hsms;
 		
+		public AppJSONArray() {
+			m_hsms = new HsmJSONObject();
+		}
+		
 		public String getAppName() {
-			return m_AppGrps.getString(0);
+			return m_AppGrps.getJSONObject(0).getString("appname");
 		}
 		
 		public int getHsmSize() {
@@ -27,28 +35,32 @@ public class PoolJSONConf extends JSONConf {
 	public class HsmJSONObject {
 		public JSONObject m_hsmClient;
 		
-		public String Address() {
+		public String ip() {
 			return m_hsmClient.getString("ipaddr");
 		}
 		
-		public int Port() {
+		public int port() {
 			return m_hsmClient.getInt("port");
 		}
 		
-		public int MaxConn() {
+		public int maxConn() {
 			return m_hsmClient.getInt("maxconn");
 		}
 		
-		public int MinConn() {
+		public int minConn() {
 			return m_hsmClient.getInt("minconn");
+		}
+		
+		public int timeout() {
+			return m_hsmClient.getInt("timeout");
 		}
 	}
 	
-	public int getAppSize() {
+	public int getAppSize() throws Exception {
 		return size();
 	}
 	
-	public AppJSONArray Apps(int n) {
+	public AppJSONArray apps(int n) {
 		m_apps.m_AppGrps = m_array.getJSONArray(n);
 		return m_apps;
 	}
