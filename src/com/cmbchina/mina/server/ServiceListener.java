@@ -13,10 +13,9 @@ public class ServiceListener implements IoServiceListener {
 	}
 
 	@Override
-	public void serviceIdle(IoService service, IdleStatus idleStatus)
-			throws Exception {
+	public void serviceIdle(IoService service, IdleStatus idleStatus) throws Exception {
 		// TODO Auto-generated method stub
-		
+		System.out.println("ServiceListener serviceIdle");
 	}
 
 	@Override
@@ -28,7 +27,7 @@ public class ServiceListener implements IoServiceListener {
 	@Override
 	public void sessionCreated(IoSession session) throws Exception {
 		// TODO Auto-generated method stub
-		
+		System.out.println("ServiceListener sessionCreated");
 	}
 
 	@Override
@@ -40,6 +39,6 @@ public class ServiceListener implements IoServiceListener {
 	@Override
 	public void sessionDestroyed(IoSession session) throws Exception {
 		// TODO Auto-generated method stub
-		
+		System.out.println("ServiceListener sessionDestroyed");
 	}
 }

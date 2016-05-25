@@ -9,7 +9,7 @@ public class myIoFutureListner implements IoFutureListener {
 	public void operationComplete(IoFuture future) {
 		System.out.println("myIoFutureListner operationComplete");
 		if(future.getSession().isConnected()) {
-			System.out.println("connected");
+			System.out.println("Session connected");
 		}
 	}
 }

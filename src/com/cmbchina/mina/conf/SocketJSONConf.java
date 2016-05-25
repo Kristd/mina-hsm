@@ -62,6 +62,15 @@ public class SocketJSONConf extends JSONConf {
 		}
 	}
 	
+	public int socketTimeout() {
+		try {
+			return m_array.getJSONObject(SOCKET_INDEX).getInt("timeout");
+		}
+		catch(Exception ex) {
+			return GlobalVars.TIMEOUT;
+		}
+	}
+	
 	public boolean codeflter() {
 		try {
 			return m_array.getJSONObject(ENCODING_INDEX).getBoolean("codefilter");

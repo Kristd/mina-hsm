@@ -5,7 +5,8 @@
 		"port":"8529",
 		"maxconn":"10",
 		"idletime":"5",
-		"buffersize":"10240"
+		"buffersize":"10240",
+		"timeout":"10"
 	},
 	{
 		"codefilter":"true",

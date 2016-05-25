@@ -79,7 +79,7 @@ public class HsmSocket extends IoSocket {
 	
 	public boolean init() throws Exception {
 		m_clientconf.loadObject(JSONUtil.parserJSONArray(ResourceMngr.getServiceConfigData(GlobalVars.CLIENT_CFG)));
-		m_connector.setConnectTimeoutMillis(GlobalVars.TIMEOUT);
+		m_connector.setConnectTimeoutMillis(m_clientconf.socketTimeout());
 		
 		m_connector.getSessionConfig().setReadBufferSize(m_clientconf.socketBufferSize());
 		m_connector.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, m_clientconf.socketIdleTime());

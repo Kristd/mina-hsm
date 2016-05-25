@@ -1,29 +1,12 @@
 package com.cmbchina.mina.client;
 
-import java.net.InetSocketAddress;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.apache.mina.core.future.ConnectFuture;
-import org.apache.mina.core.future.ReadFuture;
-import org.apache.mina.core.future.WriteFuture;
-import org.apache.mina.core.service.IoConnector;
-import org.apache.mina.core.session.IoSession;
-import org.apache.mina.filter.codec.ProtocolCodecFilter;
-import org.apache.mina.filter.codec.prefixedstring.PrefixedStringCodecFactory;
-import org.apache.mina.filter.logging.LoggingFilter;
-import org.apache.mina.transport.socket.nio.NioSocketConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cmbchina.mina.abstracts.HsmWorkManager;
 import com.cmbchina.mina.enums.Status;
 import com.cmbchina.mina.interfaces.factory.WorkMngrFactory;
-import com.cmbchina.mina.interfaces.factory.PBOCWorkMngr;
+import com.cmbchina.mina.proto.HsmRequest;
 
 public class HsmClient {
 	private String m_ip;
@@ -53,43 +36,20 @@ public class HsmClient {
 		m_workMngr = WorkMngrFactory.loadWorkManager(m_appname);
 	}
 	
-	public void start() throws Exception	{
+	public void start() throws Exception {
 		LOGGER.info("start HsmClient=" + this.toString());
 		m_sockMngr.start();
 	}
 	
+	public Object process(String job, String request) {
+		HsmRequest _request = m_workMngr.request(job, request);
+		m_sockMngr.getConnection().send("");
+		
+		return null;
+	}
+	
 	/*
-	public Object process(String app, String job, Object request) {
-		PBOCWorkMngr mng = (PBOCWorkMngr) m_mngr.get("PBOC");
-		return mng.doWork(job, request);
-	}
-	
-	public Object doWork(String job, Object request) {
-		Object obj = process(job, request);
-		//need a asyn control here
-		m_hsmSockMngr.getClass();
-		return null;
-	}
-	
-	public void send(String buffer) {
-		Object obj = null;
-		Iterator<HsmSocket> it = m_connMngr.iterator();
-		while(it.hasNext())
-		{
-			HsmSocket conn = (HsmSocket)it.next();
-			if(conn.getConnStatus() == HsmSocket.HSM_CONN_FREE)
-			{
-				obj = conn.SendAndRecv(buffer);
-				getHsmStatus();
-			}
-		}
-	}
-	
-	public Object recv() {
-		return null;
-	}
-	
-	public int refresh() {
+	public Status refresh() {
 		int free_num=0;
 		int busy_num=0;
 		float per = 0;
@@ -103,19 +63,23 @@ public class HsmClient {
 				busy_num++;
 			else if(conn.getConnStatus() == HsmSocket.HSM_CONN_ERR)
 			{
-				hsm_status = HSM_DOWN;
-				return hsm_status;
+				m_status = Status.ERROR;
+				return m_status;
 			}
 			
 		}
-		per = free_num/conn_num;
-		if(per>0.5)
-			hsm_status = HSM_FREE;
-		else
-			hsm_status = HSM_BUSY;
 		
-		return hsm_status;
+		per = free_num/m_conn;
+		if(per > 0.5) {
+			m_status = Status.FREE;
+		}
+		else {
+			m_status = Status.BUSY;
+		}
+		
+		return m_status;
 	}
+	*/
 	
 	public Status setHsmStatus(int nfree) {
 		return Status.FREE;
@@ -123,13 +87,12 @@ public class HsmClient {
 	
 	public String getStatus() {
 		synchronized(m_lock) {
-			refresh();
+			//refresh();
 			return m_status.toString();
 		}
 	}
 
 	public String getAppName(String name) {
-		return m_appName;
+		return m_appname;
 	}
-	*/
 }

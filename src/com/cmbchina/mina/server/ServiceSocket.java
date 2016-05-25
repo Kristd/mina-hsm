@@ -103,7 +103,9 @@ public class ServiceSocket extends IoSocket {
 	}
 	
 	public void listen() throws IOException {
+		m_acceptor.addListener(new ServiceListener());
 		m_acceptor.bind(new InetSocketAddress(m_port));
+		
 		System.out.println("[" + m_port + "]service started..");
 	}
 	

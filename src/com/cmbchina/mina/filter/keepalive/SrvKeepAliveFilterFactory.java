@@ -4,7 +4,7 @@ import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.keepalive.KeepAliveMessageFactory;
 
 //for purposes to deal with client's keep alive request
-public class ServKeepAliveFilterFactory implements KeepAliveMessageFactory{
+public class SrvKeepAliveFilterFactory implements KeepAliveMessageFactory{
 	
 	@Override
 	public boolean isRequest(IoSession session, Object message) {

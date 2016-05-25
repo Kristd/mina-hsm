@@ -21,14 +21,14 @@ public class ServiceProcess {
 		ServiceSocket.instance().listen();
 	}
 	
-	private static void startDbService() {
+	private static void startDBService() {
 		;
 	}
 	
 	public static void start() throws Exception {
 		initialize();
 		startHsmService();
-		startDbService();
+		startDBService();
 		startListener();
 	}
 	

@@ -5,9 +5,11 @@ import java.util.HashMap;
 import com.cmbchina.mina.abstracts.HsmWork;
 import com.cmbchina.mina.abstracts.HsmWorkManager;
 import com.cmbchina.mina.interfaces.kmc.MakeMAC;
+import com.cmbchina.mina.proto.HsmRequest;
+import com.cmbchina.mina.proto.HsmResponse;
 
 
-public class KMCWorkMngr extends HsmWorkManager {
+public class KMCWorkMngr implements HsmWorkManager {
 	private static HashMap<String, HsmWork> m_workMap = new HashMap<String, HsmWork>();
 	
 	static{
@@ -22,14 +24,21 @@ public class KMCWorkMngr extends HsmWorkManager {
 		return InstanceHolder.m_instance;
 	}
 	
-	public Object doWork(String jobName, Object request) {
-		HsmWork job = m_workMap.get(jobName);
-		return job.work(request);
-	}
-	
 	public static void addWork(String jobName, HsmWork work) {
 		if(!m_workMap.containsKey(jobName)) {
 			m_workMap.put(jobName, work);
 		}
+	}
+
+	@Override
+	public HsmRequest request(String jobname, String request) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String response(String jobname, HsmResponse request) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

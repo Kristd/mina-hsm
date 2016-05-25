@@ -5,15 +5,15 @@ import java.util.HashMap;
 import com.cmbchina.mina.abstracts.HsmWork;
 import com.cmbchina.mina.abstracts.HsmWorkManager;
 import com.cmbchina.mina.interfaces.pboc.GenCVC;
-import com.cmbchina.mina.interfaces.pboc.VerifyCVC;
+import com.cmbchina.mina.proto.HsmRequest;
+import com.cmbchina.mina.proto.HsmResponse;
 
 
-public class PBOCWorkMngr extends HsmWorkManager {
+public class PBOCWorkMngr implements HsmWorkManager {
 	private static HashMap<String, HsmWork> m_workMap = new HashMap<String, HsmWork>();
 	
 	static{
 		GenCVC.register();
-		VerifyCVC.register();
 	}
 	
 	private static class InstanceHolder {
@@ -24,9 +24,14 @@ public class PBOCWorkMngr extends HsmWorkManager {
 		return InstanceHolder.m_instance;
 	}
 	
-	public Object doWork(String jobName, Object request) {
-		HsmWork job = m_workMap.get(jobName);
-		return job.work(request);
+	@Override
+	public HsmRequest request(String jobName, String request) {
+		return m_workMap.get(jobName).request(request);
+	}
+	
+	@Override
+	public String response(String jobName, HsmResponse response) {
+		return m_workMap.get(jobName).response(response);
 	}
 	
 	public static void addWork(String jobName, HsmWork work) {
