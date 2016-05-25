@@ -4,7 +4,7 @@ import org.apache.mina.core.future.IoFuture;
 import org.apache.mina.core.future.IoFutureListener;
 
 
-public class myIoFutureListner implements IoFutureListener {
+public class HsmFutureListner implements IoFutureListener {
 	@Override
 	public void operationComplete(IoFuture future) {
 		System.out.println("myIoFutureListner operationComplete");

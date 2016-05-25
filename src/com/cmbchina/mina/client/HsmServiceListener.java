@@ -5,7 +5,7 @@ import org.apache.mina.core.service.IoServiceListener;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
 
-public class myIoServiceListener implements IoServiceListener {
+public class HsmServiceListener implements IoServiceListener {
 
 	@Override
 	public void serviceActivated(IoService service) throws Exception {

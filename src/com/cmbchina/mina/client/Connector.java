@@ -48,7 +48,7 @@ public class Connector {
 		
 		connectFuture = connector.connect(new InetSocketAddress("99.12.38.74", 82));
 		//connectFuture.awaitUninterruptibly(5000);
-		connectFuture.addListener(new myIoFutureListner());
+		connectFuture.addListener(new HsmFutureListner());
 		/*
 		if(connectFuture.isConnected()) {
 			System.out.println("connect succ");

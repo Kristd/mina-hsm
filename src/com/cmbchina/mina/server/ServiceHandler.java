@@ -44,9 +44,6 @@ public class ServiceHandler extends IoHandlerAdapter {
 	@Override
     public void messageSent(IoSession session, Object message) throws Exception {
 		System.out.println("ServiceHandler messageSent=" + message.toString());
-		LOGGER.info("");session.
-		isBothIdle();
-		session.close(true);
     }
 	
 	@Override
@@ -58,14 +55,10 @@ public class ServiceHandler extends IoHandlerAdapter {
 		String jobname = _message_.substring(4,  8);
 		String request = _message_.substring(8, message.toString().length());
 		
-		HsmClient freeHsm = HsmClientPool.instance().getHSM(appname.trim());
-		
-		freeHsm.process(jobname, request);
-/*		
-		WriteFuture future = session.write(message);
-		future.addListener(listener);
-		future.isDone()
-*/	
+		String response = HsmClientPool.instance().getHSM(appname).process(jobname, request);
+	
+		WriteFuture future = session.write(response);
+		future.addListener(new ServiceFutureListener());
 	}
 }
 

@@ -7,6 +7,7 @@ import com.cmbchina.mina.abstracts.HsmWorkManager;
 import com.cmbchina.mina.enums.Status;
 import com.cmbchina.mina.interfaces.factory.WorkMngrFactory;
 import com.cmbchina.mina.proto.HsmRequest;
+import com.cmbchina.mina.proto.HsmResponse;
 
 public class HsmClient {
 	private String m_ip;
@@ -41,11 +42,15 @@ public class HsmClient {
 		m_sockMngr.start();
 	}
 	
-	public Object process(String job, String request) {
-		HsmRequest _request = m_workMngr.request(job, request);
-		m_sockMngr.getConnection().send("");
+	public String process(String job, String request) {
+		HsmResponse _response_ = new HsmResponse();
+		HsmRequest _request_ = m_workMngr.request(job, request);
+		HsmSocket sock = m_sockMngr.getConnection();
 		
-		return null;
+		sock.send(_request_.getRequest());
+		sock.recv(_response_);
+		
+		return _response_.getResponse();
 	}
 	
 	/*

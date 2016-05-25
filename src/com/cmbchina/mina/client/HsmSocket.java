@@ -2,7 +2,6 @@ package com.cmbchina.mina.client;
 
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
-import java.util.LinkedList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 
@@ -26,6 +25,7 @@ import com.cmbchina.mina.abstracts.IoSocket;
 import com.cmbchina.mina.conf.SocketJSONConf;
 import com.cmbchina.mina.enums.Status;
 import com.cmbchina.mina.filter.keepalive.HsmKeepAliveFilterFactory;
+import com.cmbchina.mina.proto.HsmResponse;
 import com.cmbchina.mina.server.ResourceMngr;
 import com.cmbchina.mina.utils.GlobalVars;
 import com.cmbchina.mina.utils.JSONUtil;
@@ -144,6 +144,7 @@ public class HsmSocket extends IoSocket {
 		while(true) {
 			synchronized(m_lock) {
 				if(m_connected) {
+					m_session = m_future.getSession();
 					System.out.println("connected to " + m_ip + ":" + m_port);
 					return m_connected;
 				}
@@ -162,55 +163,50 @@ public class HsmSocket extends IoSocket {
 		return 0;
 	}
 	
-	protected Object send(String buffer)	{
+	protected String send(String request) {
 		long startTime=0, endTime=0, costTime=-1;
-         IoSession session = m_future.getSession();
-         Object message;
-         
-         //System.out.println("IP-port:"+ip+":"+port+" is handling......");
-         startTime = System.currentTimeMillis();
-         
-         WriteFuture w_future = session.write(buffer);
-          
-         // Wait until the message is completely written out to the O/S buffer.
-         w_future.awaitUninterruptibly();//join();
-         if( w_future.isWritten() )
-         {
-             // The message has been written successfully.
-        	 System.out.println("send succ");
-         }
-         else
-         {
-             // The messsage couldn't be written out completely for some reason.
-             // (e.g. Connection is closed)
-        	 System.out.println("send err");
-         }
-         
-         // useReadOperation must be enabled to use read operation.
-         session.getConfig().setUseReadOperation(true);
-         
-         ReadFuture r_future = session.read();
-         // Wait until a message is received.
-         try {
-			r_future.await();
-		} catch (InterruptedException e1) {
+		
+		String message;
+		startTime = System.currentTimeMillis();
+		 
+		WriteFuture wfuture = m_session.write(request);
+		  
+		wfuture.awaitUninterruptibly();//join();
+		if( wfuture.isWritten() ) {
+			System.out.println("send succ");
+		}
+		else {
+			System.out.println("send err");
+		}
+		 
+		// useReadOperation must be enabled to use read operation.
+		m_session.getConfig().setUseReadOperation(true);
+		 
+		ReadFuture rfuture = m_session.read();
+		// Wait until a message is received.
+		try {
+			rfuture.await();
+		} 
+		catch (InterruptedException e1) {
 			e1.printStackTrace();
 		}
-         try {
-             message = r_future.getMessage();
-         } catch (Exception e) {
-             throw new RuntimeException();
-         }
-         finally{
-        	 endTime = System.currentTimeMillis();
-        	 costTime = endTime - startTime;
-         }
-
-        System.out.println("recv succ"+message.toString());
+		 
+		try {
+			message = rfuture.getMessage().toString();
+		} 
+		catch (Exception e) {
+		    throw new RuntimeException();
+		}
+		finally {
+			endTime = System.currentTimeMillis();
+			costTime = endTime - startTime;
+		}
+		
+		System.out.println("recv succ"+message.toString());
 		return message;
 	}
 	
-	public int recv() {
+	public int recv(HsmResponse response) {
 		return 0;
 	}
 	
