@@ -11,13 +11,13 @@ public class GenCVC implements HsmWork {
 	}
 
 	@Override
-	public HsmRequest request(Object request) {
+	public String request(Object request) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public String response(HsmResponse response) {
+	public Object response(String response) {
 		// TODO Auto-generated method stub
 		return null;
 	}

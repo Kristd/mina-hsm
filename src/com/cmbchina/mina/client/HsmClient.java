@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import com.cmbchina.mina.abstracts.HsmWorkManager;
 import com.cmbchina.mina.enums.Status;
-import com.cmbchina.mina.interfaces.factory.WorkMngrFactory;
+import com.cmbchina.mina.interfaces.factory.AppMngrFactory;
 import com.cmbchina.mina.proto.HsmRequest;
 import com.cmbchina.mina.proto.HsmResponse;
 
@@ -34,7 +34,9 @@ public class HsmClient {
 		m_weight = 0;
 		m_status = Status.FREE;
 		m_sockMngr = new HsmSocketMngr(m_appname, m_ip, m_port, m_timeout, m_conn);
-		m_workMngr = WorkMngrFactory.loadWorkManager(m_appname);
+		m_workMngr = AppMngrFactory.loadWorkManager(m_appname);
+		
+		System.out.println(m_appname + "||" + m_workMngr.getClass().getName());
 	}
 	
 	public void start() throws Exception {
@@ -42,15 +44,16 @@ public class HsmClient {
 		m_sockMngr.start();
 	}
 	
-	public String process(String job, String request) {
-		HsmResponse _response_ = new HsmResponse();
-		HsmRequest _request_ = m_workMngr.request(job, request);
+	public Object process(String jobname, String request) {
 		HsmSocket sock = m_sockMngr.getConnection();
 		
-		sock.send(_request_.getRequest());
-		sock.recv(_response_);
+		String _request_ = m_workMngr.request(jobname, request);
 		
-		return _response_.getResponse();
+		System.out.println("sending request=" + _request_);
+		
+		sock.send(_request_);
+		String _response_ = sock.recv();
+		return m_workMngr.response(jobname, _response_);
 	}
 	
 	/*

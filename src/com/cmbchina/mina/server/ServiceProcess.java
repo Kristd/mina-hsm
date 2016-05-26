@@ -33,6 +33,11 @@ public class ServiceProcess {
 	}
 	
 	public static void stop() {
-		;
+		HsmClientPool.instance().release();
+		ServiceSocket.instance().close();
+	}
+	
+	protected void finalize() {
+		stop();
 	}
 }

@@ -24,19 +24,19 @@ public class PBOCWorkMngr implements HsmWorkManager {
 		return InstanceHolder.m_instance;
 	}
 	
-	@Override
-	public HsmRequest request(String jobName, String request) {
-		return m_workMap.get(jobName).request(request);
-	}
-	
-	@Override
-	public String response(String jobName, HsmResponse response) {
-		return m_workMap.get(jobName).response(response);
-	}
-	
 	public static void addWork(String jobName, HsmWork work) {
 		if(!m_workMap.containsKey(jobName)) {
 			m_workMap.put(jobName, work);
 		}
+	}
+	
+	@Override
+	public String request(String jobName, Object request) {
+		return m_workMap.get(jobName).request(request);
+	}
+	
+	@Override
+	public Object response(String jobName, String response) {
+		return m_workMap.get(jobName).response(response);
 	}
 }

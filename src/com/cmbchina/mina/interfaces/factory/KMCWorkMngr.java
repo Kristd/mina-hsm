@@ -17,7 +17,7 @@ public class KMCWorkMngr implements HsmWorkManager {
 	}
 	
 	private static class InstanceHolder {
-		static final HsmWorkManager m_instance = new PBOCWorkMngr();
+		static final HsmWorkManager m_instance = new KMCWorkMngr();
 	}
 	
 	public static HsmWorkManager instance() {
@@ -31,14 +31,12 @@ public class KMCWorkMngr implements HsmWorkManager {
 	}
 
 	@Override
-	public HsmRequest request(String jobname, String request) {
-		// TODO Auto-generated method stub
-		return null;
+	public String request(String jobName, Object request) {
+		return m_workMap.get(jobName).request(request);
 	}
 
 	@Override
-	public String response(String jobname, HsmResponse request) {
-		// TODO Auto-generated method stub
-		return null;
+	public Object response(String jobName, String response) {
+		return m_workMap.get(jobName).response(response);
 	}
 }

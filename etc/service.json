@@ -5,8 +5,7 @@
 		"port":"8529",
 		"maxconn":"10",
 		"idletime":"5",
-		"buffersize":"10240",
-		"timeout":"10"
+		"buffersize":"10240"
 	},
 	{
 		"codefilter":"true",
@@ -16,8 +15,8 @@
 	},
 	{
 		"threadpool":"true",
-		"pooltype":"newCachedThreadPool"	
-	},	
+		"pooltype":"newCachedThreadPool"
+	},
 	{
 		"keepalive":"false",
 		"interval":"10",

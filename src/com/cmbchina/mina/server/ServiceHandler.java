@@ -51,11 +51,17 @@ public class ServiceHandler extends IoHandlerAdapter {
 		System.out.println("ServiceHandler messageReceived=" + message.toString());
 		
 		String _message_ = message.toString();
-		String appname = _message_.substring(0, 4);
-		String jobname = _message_.substring(4,  8);
-		String request = _message_.substring(8, message.toString().length());
 		
-		String response = HsmClientPool.instance().getHSM(appname).process(jobname, request);
+		String appname = _message_.substring(0, 4).trim();
+		System.out.println("appname=" + appname);
+		
+		String jobname = _message_.substring(4, 14).trim();
+		System.out.println("jobname=" + jobname);
+		
+		String request = _message_.substring(14, message.toString().length()).trim();
+		System.out.println("request=" + request);
+		
+		String response = (String) HsmClientPool.instance().getHSM(appname).process(jobname, request);
 	
 		WriteFuture future = session.write(response);
 		future.addListener(new ServiceFutureListener());

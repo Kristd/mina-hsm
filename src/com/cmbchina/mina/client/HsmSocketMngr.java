@@ -1,5 +1,6 @@
 package com.cmbchina.mina.client;
 
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.slf4j.Logger;
@@ -14,7 +15,7 @@ public class HsmSocketMngr {
 	private int m_minConn;
 	private int m_timeout;
 	private String m_appname;
-	private ConcurrentLinkedQueue<HsmSocket> m_connections;
+	private ArrayList<HsmSocket> m_connections;
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(HsmSocketMngr.class);
 	
@@ -25,7 +26,7 @@ public class HsmSocketMngr {
 		m_port = port;
 		m_timeout = timeout;
 		m_maxconn = maxconn;
-		m_connections = new ConcurrentLinkedQueue<HsmSocket>();
+		m_connections = new ArrayList<HsmSocket>();
 	}
 	
 	public boolean init() throws Exception {
@@ -62,7 +63,7 @@ public class HsmSocketMngr {
 	}
 	
 	public HsmSocket getConnection() {
-		return null;
+		return m_connections.get(0);
 	}
 	
 	public void dispose() {

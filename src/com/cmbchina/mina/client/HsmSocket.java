@@ -53,14 +53,13 @@ public class HsmSocket extends IoSocket {
 	private class HsmSockFutureListner implements IoFutureListener {
 		@Override
 		public void operationComplete(IoFuture future) {
-			System.out.println("myIoFutureListner operationComplete");
+			System.out.println("HsmSockFutureListner operationComplete");
 			if(future.getSession().isConnected()) {
-				System.out.println("connected");
-				
 	        	m_status = Status.FREE;
 	        	m_msgsize = 0;
 	        	
 	        	synchronized(m_lock) {
+	        		System.out.println("HsmSockFutureListner connected");
 	        		m_connected = true;
 	        	}
 			}
@@ -129,7 +128,7 @@ public class HsmSocket extends IoSocket {
 		m_connector.getFilterChain().addLast("keepalive", hsmKeepAliveFilterFactory);
 	}
 	
-	protected boolean connect() {
+	protected boolean connect() throws Exception {
 		m_future = m_connector.connect(new InetSocketAddress(m_ip, m_port));  
 		//m_future.awaitUninterruptibly();
 		m_future.addListener(new HsmSockFutureListner());
@@ -145,8 +144,13 @@ public class HsmSocket extends IoSocket {
 			synchronized(m_lock) {
 				if(m_connected) {
 					m_session = m_future.getSession();
-					System.out.println("connected to " + m_ip + ":" + m_port);
+					m_session.getConfig().setUseReadOperation(true);
+					
+					System.out.println("HsmSocket connected to " + m_ip + ":" + m_port);
 					return m_connected;
+				}
+				else {
+					//System.out.println("HsmSocket not connected");
 				}
 			}
 		}
@@ -163,51 +167,38 @@ public class HsmSocket extends IoSocket {
 		return 0;
 	}
 	
-	protected String send(String request) {
+	protected int send(String request) {
 		long startTime=0, endTime=0, costTime=-1;
-		
-		String message;
 		startTime = System.currentTimeMillis();
 		 
 		WriteFuture wfuture = m_session.write(request);
-		  
-		wfuture.awaitUninterruptibly();//join();
-		if( wfuture.isWritten() ) {
+		/*
+		if(wfuture.isWritten()) {
 			System.out.println("send succ");
 		}
 		else {
 			System.out.println("send err");
 		}
-		 
-		// useReadOperation must be enabled to use read operation.
-		m_session.getConfig().setUseReadOperation(true);
-		 
+		*/
+		return request.length();
+	}
+	
+	public String recv() {
 		ReadFuture rfuture = m_session.read();
 		// Wait until a message is received.
+		/*
 		try {
 			rfuture.await();
 		} 
-		catch (InterruptedException e1) {
-			e1.printStackTrace();
+		catch (InterruptedException ex) {
+			ex.printStackTrace();
 		}
-		 
-		try {
-			message = rfuture.getMessage().toString();
-		} 
-		catch (Exception e) {
-		    throw new RuntimeException();
-		}
-		finally {
-			endTime = System.currentTimeMillis();
-			costTime = endTime - startTime;
-		}
+		*/
+		rfuture.awaitUninterruptibly();
+		String message = rfuture.getMessage().toString();
 		
-		System.out.println("recv succ"+message.toString());
+		System.out.println("recv message=" + message.toString());
 		return message;
-	}
-	
-	public int recv(HsmResponse response) {
-		return 0;
 	}
 	
 	public Status getStatus() {

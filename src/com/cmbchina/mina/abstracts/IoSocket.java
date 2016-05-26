@@ -25,8 +25,4 @@ public abstract class IoSocket {
 	public void close() {
 		;
 	}
-	
-	protected void finalize() throws Throwable {
-		;
-	}
 }

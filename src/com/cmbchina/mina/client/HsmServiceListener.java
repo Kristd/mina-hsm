@@ -14,8 +14,7 @@ public class HsmServiceListener implements IoServiceListener {
 	}
 
 	@Override
-	public void serviceIdle(IoService service, IdleStatus idleStatus)
-			throws Exception {
+	public void serviceIdle(IoService service, IdleStatus idleStatus) throws Exception {
 		// TODO Auto-generated method stub
 		
 	}

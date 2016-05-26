@@ -11,15 +11,13 @@ public class MakeMAC implements HsmWork {
 	}
 
 	@Override
-	public HsmRequest request(Object request) {
-		// TODO Auto-generated method stub
-		return null;
+	public String request(Object request) {
+		return "NCMUMA1580551B4E5427BC" + request;
 	}
 
 	@Override
-	public String response(HsmResponse response) {
-		// TODO Auto-generated method stub
-		return null;
+	public Object response(String response) { 
+		return response.substring(8, response.length()-1);
 	}
 
 }

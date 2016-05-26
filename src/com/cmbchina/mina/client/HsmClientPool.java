@@ -1,13 +1,10 @@
 package com.cmbchina.mina.client;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +36,8 @@ public class HsmClientPool {
 	}
 	
 	public void init() throws Exception {
-		boolean isloaded = m_hsmConf.loadObject(JSONUtil.parserJSONArray(ResourceMngr.getServiceConfigData(GlobalVars.HSMPOOL_CFG)));
+		boolean isloaded = m_hsmConf.loadObject(JSONUtil.parserJSONArray(
+							ResourceMngr.getServiceConfigData(GlobalVars.HSMPOOL_CFG)));
 		
 		if(!isloaded) {
 			throw new Exception("loading JSON configuration failed");
@@ -47,15 +45,11 @@ public class HsmClientPool {
 		else {
 			LOGGER.info("HsmClientPool loading configuration");
 		}
-		
-		int nAppSize = m_hsmConf.getAppSize();
 
-		for(int n = 0; n < nAppSize; n++) {
+		for(int n = 0; n < m_hsmConf.getAppSize(); n++) {
 			String appname = m_hsmConf.apps(n).getAppName();
 			Vector<HsmClient> vecHsms = new Vector<HsmClient>();
 			int nhsmCount = m_hsmConf.apps(n).getHsmSize();
-			
-			LOGGER.info("loading Application = " + appname + " HSM size = " + nhsmCount);
 			
 			for(int m = 1; m <= nhsmCount; m++) {
 				String ip = m_hsmConf.apps(n).HsmClinets(m).ip();
@@ -68,7 +62,6 @@ public class HsmClientPool {
 				vecHsms.add(client);
 			}
 			
-			LOGGER.info("HsmClientPool vev=" + vecHsms.toString());
 			m_appGrp.put(appname, vecHsms);
 		}
 		
@@ -83,7 +76,7 @@ public class HsmClientPool {
 			String key = (String) entry.getKey();
 			
 			for(int i = 0; i < m_appGrp.get(key).size(); i++) {
-				LOGGER.info("m_AppGrp.get(key)=" + key);
+				LOGGER.info("m_appGrp.get(key)=" + key);
 				m_appGrp.get(key).get(i).start();
 			}
 		}
@@ -107,49 +100,46 @@ public class HsmClientPool {
 	}
 	
 	public HsmClient getHSM(String appname, int n) throws Exception {
-		if(!m_appGrp.containsKey(appname)) {
-			throw new Exception("app name not exist");
-		}
+		if(m_appGrp.containsKey(appname) || m_appGrp.containsKey(appname.toLowerCase()) || m_appGrp.containsKey(appname.toUpperCase())) {
+			System.out.println("key in tables");
 		
-		Vector<HsmClient> vec = m_appGrp.get(appname);
-		if(vec.size() < n-1) {
-			throw new Exception("HSM out of range");
-		}
-		
-		HsmClient hsm = vec.get(n);
-		if(hsm != null) {
-			return hsm;
+			Vector<HsmClient> vec = m_appGrp.get(appname);
+			if(vec.size() < n-1) {
+				throw new Exception("HSM out of range");
+			}
+			
+			HsmClient hsm = vec.get(n);
+			if(hsm != null) {
+				return hsm;
+			}
+			else {
+				throw new Exception("HSM is null");
+			}
 		}
 		else {
-			throw new Exception("HSM is null");
+			throw new Exception("key not in tables");
 		}
 	}
 	
 	public HsmClient getHSM(String appname) throws Exception {
-		if(!m_appGrp.containsKey(appname)) {
-			throw new Exception("app name not exist");
+		System.out.println("[HsmClientPool]appname=" + appname);
+		if(m_appGrp.containsKey(appname) || m_appGrp.containsKey(appname.toLowerCase()) || m_appGrp.containsKey(appname.toUpperCase())) {
+			System.out.println("key in tables");
+		
+			Random rand = new Random();
+			if(m_appGrp.get(appname).size() > 1) {
+				return getHSM(appname, rand.nextInt(m_appGrp.get(appname).size()-1));
+			}
+			else {
+				return getHSM(appname, 0);
+			}
 		}
-		
-		Random rand = new Random();
-		int n = rand.nextInt(m_appGrp.get(appname).size()-1);
-		
-		return getHSM(appname, n);
-	}
-/*	
-	public int send(String appname, String request) throws Exception {
-		HsmClient hsm = getHSM(appname);
-		if(hsm == null) {
-			throw new Exception("");
+		else {
+			throw new Exception("key not in tables");
 		}
-		
-		String jobname = request;
-		String _request_ = request;
-		
-		return hsm.send(jobname, _request_);
 	}
 	
-	public Object recv() {
-		return null;
+	public void release() {
+		;
 	}
-*/	
 }
