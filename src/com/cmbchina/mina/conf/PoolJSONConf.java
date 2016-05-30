@@ -1,9 +1,10 @@
 package com.cmbchina.mina.conf;
 
+import com.cmbchina.mina.abstracts.IoJSONConf;
 import com.cmbchina.mina.json.JSONArray;
 import com.cmbchina.mina.json.JSONObject;
 
-public class PoolJSONConf extends JSONConf {
+public class PoolJSONConf extends IoJSONConf {
 	private AppJSONArray m_apps;
 	
 	public PoolJSONConf() {

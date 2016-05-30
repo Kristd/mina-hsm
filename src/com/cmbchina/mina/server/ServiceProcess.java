@@ -3,17 +3,18 @@ package com.cmbchina.mina.server;
 import java.io.IOException;
 
 import com.cmbchina.mina.client.HsmClientPool;
+import com.cmbchina.mina.client.HsmPoolFactory;
 import com.cmbchina.mina.utils.GlobalVars;
 import com.cmbchina.mina.utils.JSONUtil;
 
 public class ServiceProcess {
 	private static void initialize() throws IOException {
-		return;
+		;
 	}
 	
 	private static void startHsmService() throws Exception {
-		HsmClientPool.instance().init();
-		HsmClientPool.instance().start();
+		HsmPoolFactory.init();
+		HsmPoolFactory.start();
 	}
 	
 	private static void startListener() throws Exception {
@@ -33,7 +34,7 @@ public class ServiceProcess {
 	}
 	
 	public static void stop() {
-		HsmClientPool.instance().release();
+		HsmPoolFactory.stop();
 		ServiceSocket.instance().close();
 	}
 	

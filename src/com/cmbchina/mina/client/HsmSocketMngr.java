@@ -31,13 +31,13 @@ public class HsmSocketMngr {
 	
 	public boolean init() throws Exception {
 		for(int i = 0; i < m_maxconn; i++) {
-				HsmSocket sock = new HsmSocket(m_ip, m_port, m_timeout);
-				sock.init();
-				m_connections.add(sock);
+			HsmSocket sock = new HsmSocket(m_ip, m_port, m_timeout);
+			sock.init();
+			m_connections.add(sock);
 		}
 			
-			m_nConn = m_maxconn;
-			return true;
+		m_nConn = m_maxconn;
+		return true;
 	}
 	
 	public boolean start() throws Exception {

@@ -1,8 +1,9 @@
 package com.cmbchina.mina.conf;
 
+import com.cmbchina.mina.abstracts.IoJSONConf;
 import com.cmbchina.mina.utils.GlobalVars;
 
-public class SocketJSONConf extends JSONConf {
+public class SocketJSONConf extends IoJSONConf {
 	private static final int SOCKET_INDEX = 0;
 	private static final int ENCODING_INDEX = 1;
 	private static final int THREAD_INDEX = 2;

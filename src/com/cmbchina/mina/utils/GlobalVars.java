@@ -4,6 +4,7 @@ public class GlobalVars {
 	public static final String SERVICE_CFG = "service.json";
 	public static final String HSMPOOL_CFG = "pool.json";
 	public static final String CLIENT_CFG = "client.json";
+	public static final String APP_CFG = "app.json";
 	public static final String ENCODING = "ISO-8859-1";
 	
 	public static final int TIMEOUT = 10;

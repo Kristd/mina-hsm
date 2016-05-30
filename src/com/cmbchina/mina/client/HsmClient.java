@@ -103,4 +103,8 @@ public class HsmClient {
 	public String getAppName(String name) {
 		return m_appname;
 	}
+	
+	public void stop() {
+		;
+	}
 }

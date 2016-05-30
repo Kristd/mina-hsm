@@ -5,17 +5,22 @@ import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.concurrent.Executors;
 
+import org.apache.mina.core.future.WriteFuture;
 import org.apache.mina.core.service.IoAcceptor;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IdleStatus;
+import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.codec.prefixedstring.PrefixedStringCodecFactory;
 import org.apache.mina.filter.executor.ExecutorFilter;
 import org.apache.mina.filter.keepalive.KeepAliveFilter;
 import org.apache.mina.filter.logging.LoggingFilter;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cmbchina.mina.abstracts.IoSocket;
+import com.cmbchina.mina.client.HsmClientPool;
 import com.cmbchina.mina.conf.SocketJSONConf;
 import com.cmbchina.mina.filter.keepalive.HsmKeepAliveFilterFactory;
 import com.cmbchina.mina.utils.GlobalVars;
@@ -47,6 +52,52 @@ public class ServiceSocket extends IoSocket {
 		return InstanceHolder.INSTANCE;
 	}
 	
+	private class ServiceHandler2 extends IoHandlerAdapter {
+		private final Logger LOGGER = LoggerFactory.getLogger(ServiceHandler.class);
+
+		@Override
+	    public void sessionOpened(IoSession session) throws Exception {
+			System.out.println("ServiceHandler sessionOpened");
+	    }
+
+		@Override
+	    public void sessionClosed(IoSession session) throws Exception {
+			System.out.println("ServiceHandler sessionClosed");
+	    }
+
+		@Override
+	    public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
+			throw new Exception("Exception caught in ServiceHandler session=" 
+								+ session.toString() + " - " + cause.getMessage());
+	    }
+
+		@Override
+	    public void messageSent(IoSession session, Object message) throws Exception {
+			System.out.println("ServiceHandler messageSent=" + message.toString());
+	    }
+		
+		@Override
+		public void messageReceived(IoSession session, Object message)throws Exception {
+			System.out.println("ServiceHandler messageReceived=" + message.toString());
+			
+			String _message_ = message.toString();
+			
+			String appname = _message_.substring(0, 4).trim();
+			System.out.println("appname=" + appname);
+			
+			String jobname = _message_.substring(4, 14).trim();
+			System.out.println("jobname=" + jobname);
+			
+			String request = _message_.substring(14, message.toString().length()).trim();
+			System.out.println("request=" + request);
+			
+			String response = (String) HsmClientPool.instance().getHSM(appname).process(jobname, request);
+		
+			WriteFuture future = session.write(response);
+			future.addListener(new ServiceFutureListener());
+		}
+	}
+	
 	public boolean init() throws Exception {
 		m_serviceconf.loadObject(JSONUtil.parserJSONArray(ResourceMngr.getServiceConfigData(GlobalVars.SERVICE_CFG)));
 		
@@ -73,7 +124,8 @@ public class ServiceSocket extends IoSocket {
 			setupKeepaliveFilter();
 		}
 		
-		m_handler = new ServiceHandler();
+		//m_handler = new ServiceHandler();
+		m_handler = new ServiceHandler2();
 		m_acceptor.setHandler(m_handler);
 		
 		return true;

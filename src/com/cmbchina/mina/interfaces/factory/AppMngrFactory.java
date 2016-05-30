@@ -1,12 +1,13 @@
 package com.cmbchina.mina.interfaces.factory;
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.cmbchina.mina.abstracts.HsmWorkManager;
 
 
 public class AppMngrFactory {
-	private static final ConcurrentHashMap<String, HsmWorkManager> m_hashmap = new ConcurrentHashMap<String, HsmWorkManager>();
+	private static final Map<String, HsmWorkManager> m_hashmap = new ConcurrentHashMap<String, HsmWorkManager>();
 	
 	static {
 		//reflect;

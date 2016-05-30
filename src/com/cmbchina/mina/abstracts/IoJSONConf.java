@@ -1,9 +1,9 @@
-package com.cmbchina.mina.conf;
+package com.cmbchina.mina.abstracts;
 
 import com.cmbchina.mina.json.JSONArray;
 import com.cmbchina.mina.json.JSONObject;
 
-public abstract class JSONConf {
+public abstract class IoJSONConf {
 	protected JSONArray m_array;
 	protected JSONObject m_object;
 	
@@ -21,7 +21,7 @@ public abstract class JSONConf {
 			return m_array.length();
 		}
 		else {
-			throw new Exception("HSM application not found");
+			throw new Exception("Objects not found");
 		}
 	}
 }

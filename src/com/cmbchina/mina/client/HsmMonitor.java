@@ -9,22 +9,11 @@ public class HsmMonitor {
 	
 	private long num;
 	
-	public void calculate(String name)
-	{
+	public void calculate(String name) {
 		appName = name;
 	}
 	
-	public void calculateTime(long costTime)
-	{
+	public void calculateTime(long costTime) {
 		//同步保护
 	}
-
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
-	}
-
 }
