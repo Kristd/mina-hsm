@@ -16,71 +16,76 @@ import com.cmbchina.mina.utils.GlobalVars;
 import com.cmbchina.mina.utils.JSONUtil;
 
 
-public abstract class HsmClientPool {
-	protected static Map<String, Map<String, HsmClient>> m_appGrp;
+public class HsmClientPool {
+	protected Map<String, Map<String, HsmClient>> m_appGrp;
 	private PoolJSONConf m_hsmConf;
-	private int m_nHsm;
 	private String m_lastHsm;
+	private String m_appname;
+	private long m_lastSeed;
+	
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(HsmClientPool.class);
 
-	protected HsmClientPool() {
+	protected HsmClientPool(String appname) {
 		m_hsmConf = new PoolJSONConf();
 		m_appGrp = new ConcurrentHashMap<String, Map<String, HsmClient>>();
-		m_nHsm = 0;
 		m_lastHsm = "0";
+		m_appname = appname;
 	}
 	
 	public boolean init() throws Exception {
 		boolean isloaded = m_hsmConf.loadObject(JSONUtil.parserJSONArray(ResourceMngr.getServiceConfigData(GlobalVars.HSMPOOL_CFG)));
 		
-		if(!isloaded) {
-			throw new Exception("loading JSON configuration failed");
-		}
-		else {
+		if(isloaded) {
 			LOGGER.info("HsmClientPool loading configuration");
 		}
 
 		for(int n = 0; n < m_hsmConf.getAppSize(); n++) {
 			String appname = m_hsmConf.apps(n).getAppName();
 			
-			Map<String, HsmClient> mapHsms = new ConcurrentHashMap<String, HsmClient>();
-			int nhsmCount = m_hsmConf.apps(n).getHsmSize();
-			
-			for(int m = 1; m <= nhsmCount; m++) {
-				String ip = m_hsmConf.apps(n).HsmClinets(m).ip();
-				int port = m_hsmConf.apps(n).HsmClinets(m).port();
-				int max = m_hsmConf.apps(n).HsmClinets(m).maxConn();
-				int min = m_hsmConf.apps(n).HsmClinets(m).minConn();
-				int timeout = m_hsmConf.apps(n).HsmClinets(m).timeout();
+			if(m_appname.equals(appname)) {
+				Map<String, HsmClient> mapHsms = new ConcurrentHashMap<String, HsmClient>();
+				int nhsmCount = m_hsmConf.apps(n).getHsmSize();
 				
-				HsmClient client = new HsmClient(appname, ip, port, timeout, max);
+				for(int m = 1; m <= nhsmCount; m++) {
+					String ip = m_hsmConf.apps(n).HsmClinets(m).ip();
+					int port = m_hsmConf.apps(n).HsmClinets(m).port();
+					int max = m_hsmConf.apps(n).HsmClinets(m).maxConn();
+					int min = m_hsmConf.apps(n).HsmClinets(m).minConn();
+					int timeout = m_hsmConf.apps(n).HsmClinets(m).timeout();
+					
+					HsmClient client = new HsmClient(appname, ip, port, timeout, max);
+					
+					System.out.println("[" + m +"]class id=" + m_lastHsm);
+					
+					mapHsms.put(m_lastHsm, client);
+					m_lastHsm = String.valueOf(Integer.parseInt(m_lastHsm) + 1);
+				}
 				
-				System.out.println("[" + m +"]class id=" + m_lastHsm);
-				
-				mapHsms.put(m_lastHsm, client);
-				m_lastHsm = String.valueOf(Integer.parseInt(m_lastHsm) + 1);
+				m_appGrp.put(appname, mapHsms);
+				return true;
 			}
-			
-			m_appGrp.put(appname, mapHsms);
 		}
 		
-		LOGGER.info("HsmClientPool init");
-		return true;
+		return false;
 	}
 	
 	public boolean start() throws Exception {
+		return start(m_appname);
+	}
+	
+	public boolean start(String appname) throws Exception {
 		Iterator<Entry<String, Map<String, HsmClient>>> it = m_appGrp.entrySet().iterator();
 		
 		while(it.hasNext()) {
 			Entry<String, Map<String, HsmClient>> entry = it.next();
 			String key = (String) entry.getKey();
 			
-			for(int i = 0; i < m_appGrp.get(key).size(); i++) {
-				LOGGER.info("m_appGrp.get(key)=" + key);
-				//m_appGrp.get(key).values().get(i).start();
-				for(HsmClient client : m_appGrp.get(key).values()) {
-					client.start();
+			if(key.equals(appname)) {
+				for(int i = 0; i < m_appGrp.get(key).size(); i++) {
+					for(HsmClient client : m_appGrp.get(key).values()) {
+						client.start();
+					}
 				}
 			}
 		}
@@ -90,81 +95,59 @@ public abstract class HsmClientPool {
 	}
 	
 	public int size() throws Exception {
-		int total = 0;
+		return size(m_appname);
+	}
+	
+	public int size(String appname) throws Exception {
 		Iterator<Entry<String, Map<String, HsmClient>>> it = m_appGrp.entrySet().iterator();
 		
 		while(it.hasNext()) {
 			Entry<String, Map<String, HsmClient>> entry = it.next();
 			String key = (String) entry.getKey();
-			total += m_appGrp.get(key).size();
+			if(key.equals(appname)) {
+				return m_appGrp.get(key).size();
+			}
 		}
 		
-		m_nHsm = total;
-		return m_nHsm;
+		return -1;
 	}
 	
-	public HsmClient getHSM(String appname, int n) throws Exception {
-		if(m_appGrp.containsKey(appname) || 
-			m_appGrp.containsKey(appname.toLowerCase()) || 
-			m_appGrp.containsKey(appname.toUpperCase())) {
-			
-			int i = 0;
-			HsmClient client = null;
+	public HsmClient getHSM(String appname, int n) throws Exception {		
+		int i = 0;
+		Map<String, HsmClient> map = m_appGrp.get(m_appname);
+		if(map.size() < n-1) {
+			throw new Exception("HSM out of range");
+		}
 		
-			Map<String, HsmClient> map = m_appGrp.get(appname);
-			if(map.size() < n-1) {
-				throw new Exception("HSM out of range");
+		Iterator<Entry<String, HsmClient>> it = map.entrySet().iterator();
+		while(it.hasNext()) {
+			if(i == n) {
+				return map.get(it.next().getKey());
 			}
 			
-			Iterator<Entry<String, HsmClient>> it = map.entrySet().iterator();
-			while(it.hasNext()) {
-				if(i == n) {
-					client = map.get(it.next().getKey());
-					break;
-				}
-				else {
-					i++;
-				}
-			}
-			
-			if(client != null) {
-				return client;
-			}
-			else {
-				throw new Exception("HSM is null");
-			}
+			i++;
+		}
+		
+		return null;
+	}
+	
+	public HsmClient getHSM() throws Exception {		
+		Random rand = new Random();
+		if(m_appGrp.get(m_appname).size() > 1) {
+			return getHSM(m_appname, rand.nextInt(m_appGrp.get(m_appname).size()-1));
 		}
 		else {
-			throw new Exception("key not in tables");
+			return getHSM(m_appname, 0);
 		}
 	}
 	
-	public HsmClient getHSM(String appname) throws Exception {
-		System.out.println("[HsmClientPool]appname=" + appname);
-		if(m_appGrp.containsKey(appname) || 
-			m_appGrp.containsKey(appname.toLowerCase()) || 
-			m_appGrp.containsKey(appname.toUpperCase())) {
-		
-			Random rand = new Random();
-			if(m_appGrp.get(appname).size() > 1) {
-				return getHSM(appname, rand.nextInt(m_appGrp.get(appname).size()-1));
-			}
-			else {
-				return getHSM(appname, 0);
-			}
-		}
-		else {
-			throw new Exception("key not in tables");
-		}
+	public void stop() throws Exception {
+		stop(m_appname);
 	}
 	
-	public void stop() {
-		for(Map<String, HsmClient> app : m_appGrp.values()) {
-			for(HsmClient client : app.values()) {
-				if(client != null) {
-					client.stop();
-				}
-			}
+	public void stop(String appname) throws Exception {
+		for(HsmClient client : m_appGrp.get(appname).values()) {
+			client.stop();
 		}
 	}
 }

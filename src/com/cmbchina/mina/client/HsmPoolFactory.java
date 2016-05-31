@@ -23,7 +23,8 @@ public class HsmPoolFactory {
 			String className = m_appconf.getClassName(i);
 			String classPath = m_appconf.getClassPath(i);
 			
-			HsmClientPool pool = (HsmClientPool) Class.forName(classPath).getMethod("instance", null).invoke(null, null);
+			//HsmClientPool pool = (HsmClientPool) Class.forName(classPath).getMethod("instance", null).invoke(null, null);
+			HsmClientPool pool = new HsmClientPool(className);
 			if(pool.init()) {
 				m_hashmap.put(className, pool);
 			}
@@ -38,7 +39,7 @@ public class HsmPoolFactory {
 	public static void start() throws Exception {
 		for(HsmClientPool pool : m_hashmap.values()) {
 			pool.start();
-		};
+		}
 	}
 	
 	public static HsmClientPool loadPoolManager(String appName) throws Exception {
@@ -52,7 +53,7 @@ public class HsmPoolFactory {
 		}
 	}
 	
-	public static void stop() {
+	public static void stop() throws Exception {
 		for(HsmClientPool pool : m_hashmap.values()) {
 			pool.stop();
 		}

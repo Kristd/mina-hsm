@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import com.cmbchina.mina.abstracts.IoSocket;
 import com.cmbchina.mina.client.HsmClientPool;
+import com.cmbchina.mina.client.HsmPoolFactory;
 import com.cmbchina.mina.conf.SocketJSONConf;
 import com.cmbchina.mina.filter.keepalive.HsmKeepAliveFilterFactory;
 import com.cmbchina.mina.utils.GlobalVars;
@@ -52,7 +53,7 @@ public class ServiceSocket extends IoSocket {
 		return InstanceHolder.INSTANCE;
 	}
 	
-	private class ServiceHandler2 extends IoHandlerAdapter {
+	private class ServiceHandler extends IoHandlerAdapter {
 		private final Logger LOGGER = LoggerFactory.getLogger(ServiceHandler.class);
 
 		@Override
@@ -91,7 +92,7 @@ public class ServiceSocket extends IoSocket {
 			String request = _message_.substring(14, message.toString().length()).trim();
 			System.out.println("request=" + request);
 			
-			String response = (String) HsmClientPool.instance().getHSM(appname).process(jobname, request);
+			String response = (String) HsmPoolFactory.loadPoolManager(appname).getHSM().process(jobname, request);
 		
 			WriteFuture future = session.write(response);
 			future.addListener(new ServiceFutureListener());
@@ -125,7 +126,7 @@ public class ServiceSocket extends IoSocket {
 		}
 		
 		//m_handler = new ServiceHandler();
-		m_handler = new ServiceHandler2();
+		m_handler = new ServiceHandler();
 		m_acceptor.setHandler(m_handler);
 		
 		return true;

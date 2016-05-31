@@ -33,12 +33,12 @@ public class ServiceProcess {
 		startListener();
 	}
 	
-	public static void stop() {
+	public static void stop() throws Exception {
 		HsmPoolFactory.stop();
 		ServiceSocket.instance().close();
 	}
 	
-	protected void finalize() {
+	protected void finalize() throws Exception {
 		stop();
 	}
 }
