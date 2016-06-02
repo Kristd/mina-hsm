@@ -1,10 +1,11 @@
 package com.cmbchina.mina.client;
 
+import org.apache.mina.core.session.IoSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cmbchina.mina.abstracts.HsmWorkManager;
-import com.cmbchina.mina.enums.Status;
+import com.cmbchina.mina.enums.HsmStatus;
 import com.cmbchina.mina.interfaces.factory.AppMngrFactory;
 import com.cmbchina.mina.proto.HsmRequest;
 import com.cmbchina.mina.proto.HsmResponse;
@@ -16,7 +17,7 @@ public class HsmClient {
 	private int m_maxconn;
 	private int m_minconn;
 	private int m_timeout;
-	private Status m_status;
+	private HsmStatus m_status;
 	private HsmSocketMngr m_sockMngr;
 	private String m_appname;
 	private int m_weight;
@@ -32,28 +33,26 @@ public class HsmClient {
 		m_timeout = timeout;
 		m_conn = maxconn;
 		m_weight = 0;
-		m_status = Status.FREE;
+		m_status = HsmStatus.FREE;
 		m_sockMngr = new HsmSocketMngr(m_appname, m_ip, m_port, m_timeout, m_conn);
 		m_workMngr = AppMngrFactory.loadWorkManager(m_appname);
-		
-		System.out.println(m_appname + "||" + m_workMngr.getClass().getName());
 	}
 	
 	public void start() throws Exception {
-		LOGGER.info("start HsmClient=" + this.toString());
 		m_sockMngr.start();
 	}
 	
-	public Object process(String jobname, String request) {
+	public boolean process(IoSession requestSession, String jobname, String request) {
+		//assume that we can get the connection randomly
 		HsmSocket sock = m_sockMngr.getConnection();
-		
+		//process the request
 		String _request_ = m_workMngr.request(jobname, request);
 		
 		System.out.println("sending request=" + _request_);
+		//send the reuqest to hsms
+		sock.process(requestSession, _request_);
 		
-		sock.send(_request_);
-		String _response_ = sock.recv();
-		return m_workMngr.response(jobname, _response_);
+		return true;
 	}
 	
 	/*
@@ -89,14 +88,14 @@ public class HsmClient {
 	}
 	*/
 	
-	public Status setHsmStatus(int nfree) {
-		return Status.FREE;
+	public HsmStatus setHsmStatus(int nfree) {
+		return HsmStatus.FREE;
 	}
 	
-	public String getStatus() {
+	public HsmStatus getStatus() {
 		synchronized(m_lock) {
 			//refresh();
-			return m_status.toString();
+			return m_status;
 		}
 	}
 
@@ -105,6 +104,6 @@ public class HsmClient {
 	}
 	
 	public void stop() {
-		;
+		m_sockMngr.stop();
 	}
 }

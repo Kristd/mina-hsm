@@ -1,28 +1,16 @@
 package com.cmbchina.mina.abstracts;
 
 
-public abstract class IoSocket {
-	public boolean init() throws Exception {
-		return false;
-	}
+public interface IoSocket {
+	public boolean init() throws Exception;
 	
-	protected void setupLoggerFilter() {
-		;
-	}
+	void setupLoggerFilter();
 	
-	protected void setupThreadsFilter() {
-		;
-	}
+	void setupThreadsFilter();
 	
-	protected void setupCodecFilter() {
-		;
-	}
+	void setupCodecFilter();
 	
-	protected void setupKeepaliveFilter() {
-		;
-	}
+	void setupKeepaliveFilter();
 	
-	public void close() {
-		;
-	}
+	public void close();
 }

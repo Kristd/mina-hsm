@@ -2,6 +2,12 @@ package com.cmbchina.mina.client;
 
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Observable;
+import java.util.Observer;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 
@@ -20,28 +26,29 @@ import org.apache.mina.filter.executor.ExecutorFilter;
 import org.apache.mina.filter.keepalive.KeepAliveFilter;
 import org.apache.mina.filter.logging.LoggingFilter;
 import org.apache.mina.transport.socket.nio.NioSocketConnector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cmbchina.mina.abstracts.IoSocket;
 import com.cmbchina.mina.conf.SocketJSONConf;
-import com.cmbchina.mina.enums.Status;
+import com.cmbchina.mina.enums.HsmStatus;
+import com.cmbchina.mina.enums.SockStatus;
 import com.cmbchina.mina.filter.keepalive.HsmKeepAliveFilterFactory;
 import com.cmbchina.mina.proto.HsmResponse;
 import com.cmbchina.mina.server.ResourceMngr;
 import com.cmbchina.mina.utils.GlobalVars;
 import com.cmbchina.mina.utils.JSONUtil;
 
-public class HsmSocket extends IoSocket {
+public class HsmSocket extends Observable implements IoSocket {
 	private IoConnector m_connector;
 	private IoSession m_session;
-	private Status m_status;
+	private SockStatus m_status;
 	private int m_timeout = 0;	
-	private int busyCountValue = 0;
-	private int freeCountValue = 0;
-	private int busyCount = 0;
-	private int freeCount = 0;
-	private Object m_lock = new Object();
-	private ConcurrentLinkedQueue<?> m_queue;
-	private int m_msgsize;
+
+	private Object m_worklock = new Object();
+	private Object m_statlock = new Object();
+	
+	
 	private String m_ip;
 	private int m_port;
 	private ConnectFuture m_future;
@@ -50,15 +57,25 @@ public class HsmSocket extends IoSocket {
 	private boolean m_connected = false;
 	private SocketJSONConf m_clientconf;
 	
+	private ConcurrentLinkedQueue<Long> m_dealtimeQueue;
+	private static final int DEALIME_MAX = 5;
+	private static final int MAX_SESSION_ID = 65535;
+	private StatusThread m_statThread;
+	private ArrayList<Observer> m_observer; 
+	
+	private int m_sessionID;
+	
+	private ConcurrentHashMap<String, IoSession> m_sessionMap;
+	private final Logger LOGGER = LoggerFactory.getLogger(HsmSocket.class);
+	
 	private class HsmSockFutureListner implements IoFutureListener {
 		@Override
 		public void operationComplete(IoFuture future) {
 			System.out.println("HsmSockFutureListner operationComplete");
 			if(future.getSession().isConnected()) {
-	        	m_status = Status.FREE;
-	        	m_msgsize = 0;
+	        	m_status = SockStatus.FREE;
 	        	
-	        	synchronized(m_lock) {
+	        	synchronized(m_worklock) {
 	        		System.out.println("HsmSockFutureListner connected");
 	        		m_connected = true;
 	        	}
@@ -66,14 +83,75 @@ public class HsmSocket extends IoSocket {
 		}
 	}
 	
+	//according to message header 1111..
+	private class HsmSocketHandler extends IoHandlerAdapter {
+		@Override
+		public void sessionOpened(IoSession session) throws Exception {
+			System.out.println("session opened=" + session.getRemoteAddress().toString());
+		}
+		
+		@Override
+		public void messageReceived(IoSession session, Object message) throws Exception {
+			System.out.println("message Received=" + message.toString());
+			
+			IoSession _session_ = m_sessionMap.get(message.toString().substring(0, 4));
+			if(_session_ != null) {
+				_session_.write(message.toString());
+			}
+	    }
+		
+		public void sessionClosed(IoSession session) throws Exception {
+			System.out.println("session closed");
+	    }
+
+	    public void messageSent(IoSession session, Object message) throws Exception {
+	    	System.out.println("message sent=" + message.toString());
+	    }
+	}
+	
+	private class StatusThread extends Thread implements Observer {
+		boolean m_run = true;
+		
+		public StatusThread() {
+			super();
+			m_run = false;
+		}
+		
+		public void run() {
+			while(m_run) {
+				synchronized(m_statlock) {
+					if(m_dealtimeQueue.size() == DEALIME_MAX) {
+						m_status = SockStatus.BUSY;
+					}
+				}
+			}
+		}
+		
+		public void begin() {
+			m_run = true;
+		}
+		
+		public void end() {
+			m_run = false;
+		}
+
+		@Override
+		public void update(Observable o, Object arg) {
+			run();
+		}
+	}
+	
 	public HsmSocket(String ip, int port, int timeout) {
 		m_ip = ip;
 		m_port = port;
 		m_timeout = timeout;
-		m_msgsize = 0;
+		m_sessionID = 0x0000;
 		
 		m_connector = new NioSocketConnector();
 		m_clientconf = new SocketJSONConf();
+		m_dealtimeQueue = new ConcurrentLinkedQueue<Long>();
+		m_statThread = new StatusThread();
+		m_sessionMap = new ConcurrentHashMap<String, IoSession>();
 	}
 	
 	public boolean init() throws Exception {
@@ -82,6 +160,7 @@ public class HsmSocket extends IoSocket {
 		
 		m_connector.getSessionConfig().setReadBufferSize(m_clientconf.socketBufferSize());
 		m_connector.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, m_clientconf.socketIdleTime());
+		m_connector.addListener(new HsmServiceListener());
 		
 		if(m_clientconf.logger()) {
 			setupLoggerFilter();
@@ -102,25 +181,27 @@ public class HsmSocket extends IoSocket {
 		m_handler = new HsmSocketHandler();
 		m_connector.setHandler(m_handler);
 		
+		addObserver(m_statThread);
+		
 		return true;
 	}
 	
-	protected void setupLoggerFilter() {
+	public void setupLoggerFilter() {
 		m_connector.getFilterChain().addLast("logger", new LoggingFilter());
 	}
 	
-	protected void setupThreadsFilter() {
+	public void setupThreadsFilter() {
 		m_connector.getFilterChain().addLast("threads", new ExecutorFilter(Executors.newCachedThreadPool()));
 	}
 	
-	protected void setupCodecFilter() {
+	public void setupCodecFilter() {
 		PrefixedStringCodecFactory codfilter = new PrefixedStringCodecFactory(Charset.forName(m_clientconf.codeflterEncoding()));
 		codfilter.setEncoderPrefixLength(m_clientconf.codeflterEncodePrefix());
 		codfilter.setDecoderPrefixLength(m_clientconf.codeflterDecodePrefix());
 		m_connector.getFilterChain().addLast("codec", new ProtocolCodecFilter(codfilter));
 	}
 	
-	protected void setupKeepaliveFilter() {
+	public void setupKeepaliveFilter() {
 		KeepAliveFilter hsmKeepAliveFilterFactory = new KeepAliveFilter(new HsmKeepAliveFilterFactory(), IdleStatus.BOTH_IDLE);
 		hsmKeepAliveFilterFactory.setRequestInterval(m_clientconf.keepaliveInterval());
 		hsmKeepAliveFilterFactory.setRequestTimeout(m_clientconf.keepaliveTimeout());
@@ -141,7 +222,7 @@ public class HsmSocket extends IoSocket {
 		*/
 		
 		while(true) {
-			synchronized(m_lock) {
+			synchronized(m_worklock) {
 				if(m_connected) {
 					m_session = m_future.getSession();
 					m_session.getConfig().setUseReadOperation(true);
@@ -161,54 +242,50 @@ public class HsmSocket extends IoSocket {
 	protected int disconnect() {
 		IoSession session = m_future.getSession();
 		session.close(true);
-		m_status = Status.FREE;
-		m_msgsize = 0;
+		m_status = SockStatus.FREE;
 		 
 		return 0;
 	}
 	
-	protected int send(String request) {
-		long startTime=0, endTime=0, costTime=-1;
-		startTime = System.currentTimeMillis();
-		 
-		WriteFuture wfuture = m_session.write(request);
-		/*
-		if(wfuture.isWritten()) {
-			System.out.println("send succ");
+	protected int process(IoSession requestSession, String request) {
+		String s = String.format("000%s", Integer.toHexString(m_sessionID).toUpperCase());
+		String ss = s.substring(s.length()-4);
+		
+		if(m_sessionMap.containsKey(ss)) {
+			m_sessionMap.replace(ss, requestSession);
 		}
 		else {
-			System.out.println("send err");
+			m_sessionMap.put(ss, requestSession);
 		}
-		*/
+		
+		request = ss + request.substring(4, request.length());
+		
+		WriteFuture wfuture = m_session.write(request);
+		wfuture.addListener(new HsmSockFutureListner());
+		
+		if(m_sessionID == MAX_SESSION_ID) {
+			m_sessionID = 0x0000;
+		}
+		else {
+			m_sessionID += 1;
+		}
+		
 		return request.length();
 	}
 	
-	public String recv() {
-		ReadFuture rfuture = m_session.read();
-		// Wait until a message is received.
-		/*
-		try {
-			rfuture.await();
-		} 
-		catch (InterruptedException ex) {
-			ex.printStackTrace();
+	public SockStatus getStatus() {
+		synchronized(m_statlock) {
+			return m_status;
 		}
-		*/
-		rfuture.awaitUninterruptibly();
-		String message = rfuture.getMessage().toString();
-		
-		System.out.println("recv message=" + message.toString());
-		return message;
-	}
-	
-	public Status getStatus() {
-		return m_status;
 	}
 	
 	public void close() {
 		if(m_connector != null) {
 			m_connector.dispose();
 		}
+		
+		disconnect();
+		deleteObservers();
 	}
 	
 	//CHECK may cause a bug 

@@ -43,15 +43,17 @@ public class HsmSocketMngr {
 	public boolean start() throws Exception {
 		if(init()) {
 			try {
-				for(HsmSocket sock : m_connections){
-					sock.connect();
+				for(int i = 0; i < m_connections.size(); i++){
+					HsmSocket sock = m_connections.get(i);
+					if(sock != null) {
+						sock.connect();
+					}
 				}
-				
+
 				return true;
 			}
 			catch(Exception ex) {
-				System.out.println("err in start");
-				dispose();
+				stop();	
 			}
 		}
 		
@@ -66,7 +68,7 @@ public class HsmSocketMngr {
 		return m_connections.get(0);
 	}
 	
-	public void dispose() {
+	public void stop() {
 		for(HsmSocket sock : m_connections){
 			sock.disconnect();
 		}

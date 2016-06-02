@@ -4,13 +4,14 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
-import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cmbchina.mina.abstracts.IoPolicy;
 import com.cmbchina.mina.conf.PoolJSONConf;
+import com.cmbchina.mina.policy.RandomPolicy;
 import com.cmbchina.mina.server.ResourceMngr;
 import com.cmbchina.mina.utils.GlobalVars;
 import com.cmbchina.mina.utils.JSONUtil;
@@ -22,7 +23,7 @@ public class HsmClientPool {
 	private String m_lastHsm;
 	private String m_appname;
 	private long m_lastSeed;
-	
+	private RandomPolicy m_policy;
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(HsmClientPool.class);
 
@@ -31,14 +32,11 @@ public class HsmClientPool {
 		m_appGrp = new ConcurrentHashMap<String, Map<String, HsmClient>>();
 		m_lastHsm = "0";
 		m_appname = appname;
+		m_policy = new RandomPolicy();
 	}
 	
 	public boolean init() throws Exception {
 		boolean isloaded = m_hsmConf.loadObject(JSONUtil.parserJSONArray(ResourceMngr.getServiceConfigData(GlobalVars.HSMPOOL_CFG)));
-		
-		if(isloaded) {
-			LOGGER.info("HsmClientPool loading configuration");
-		}
 
 		for(int n = 0; n < m_hsmConf.getAppSize(); n++) {
 			String appname = m_hsmConf.apps(n).getAppName();
@@ -55,9 +53,6 @@ public class HsmClientPool {
 					int timeout = m_hsmConf.apps(n).HsmClinets(m).timeout();
 					
 					HsmClient client = new HsmClient(appname, ip, port, timeout, max);
-					
-					System.out.println("[" + m +"]class id=" + m_lastHsm);
-					
 					mapHsms.put(m_lastHsm, client);
 					m_lastHsm = String.valueOf(Integer.parseInt(m_lastHsm) + 1);
 				}
@@ -82,15 +77,12 @@ public class HsmClientPool {
 			String key = (String) entry.getKey();
 			
 			if(key.equals(appname)) {
-				for(int i = 0; i < m_appGrp.get(key).size(); i++) {
-					for(HsmClient client : m_appGrp.get(key).values()) {
-						client.start();
-					}
+				for(HsmClient client : m_appGrp.get(key).values()) {
+					client.start();
 				}
 			}
 		}
 		
-		LOGGER.info("HsmClientPool started");
 		return true;
 	}
 	
@@ -131,10 +123,10 @@ public class HsmClientPool {
 		return null;
 	}
 	
-	public HsmClient getHSM() throws Exception {		
-		Random rand = new Random();
+	public HsmClient getHSM() throws Exception {
 		if(m_appGrp.get(m_appname).size() > 1) {
-			return getHSM(m_appname, rand.nextInt(m_appGrp.get(m_appname).size()-1));
+			Map<String, HsmClient> map = m_appGrp.get(m_appname);
+			return (HsmClient) m_policy.route(map, map.size());
 		}
 		else {
 			return getHSM(m_appname, 0);

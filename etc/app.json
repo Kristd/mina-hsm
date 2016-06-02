@@ -1,4 +1,4 @@
 [
-	"com.cmbchina.mina.client.KMCHsmPool",
-	"com.cmbchina.mina.client.PBOCHsmPool"
+	"KMC:com.cmbchina.mina.interfaces.factory.KMCWorkMngr",
+	"PBOC:com.cmbchina.mina.interfaces.factory.PBOCWorkMngr"
 ]

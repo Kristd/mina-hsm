@@ -28,7 +28,7 @@ import com.cmbchina.mina.utils.GlobalVars;
 import com.cmbchina.mina.utils.JSONUtil;
 
 
-public class ServiceSocket extends IoSocket {
+public class ServiceSocket implements IoSocket {
 	private static IoAcceptor m_acceptor;
 	private static IoHandlerAdapter m_handler;
 	
@@ -68,8 +68,7 @@ public class ServiceSocket extends IoSocket {
 
 		@Override
 	    public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
-			throw new Exception("Exception caught in ServiceHandler session=" 
-								+ session.toString() + " - " + cause.getMessage());
+			throw new Exception("Exception caught in ServiceHandler session=" + session.toString() + " - " + cause.getMessage());
 	    }
 
 		@Override
@@ -92,10 +91,11 @@ public class ServiceSocket extends IoSocket {
 			String request = _message_.substring(14, message.toString().length()).trim();
 			System.out.println("request=" + request);
 			
-			String response = (String) HsmPoolFactory.loadPoolManager(appname).getHSM().process(jobname, request);
+			//pass the request session
+			HsmPoolFactory.loadPoolManager(appname).getHSM().process(session, jobname, request);
 		
-			WriteFuture future = session.write(response);
-			future.addListener(new ServiceFutureListener());
+			//WriteFuture future = session.write(response);
+			//future.addListener(new ServiceFutureListener());		//not neccessary
 		}
 	}
 	
@@ -132,22 +132,22 @@ public class ServiceSocket extends IoSocket {
 		return true;
 	}
 	
-	protected void setupLoggerFilter() {
+	public void setupLoggerFilter() {
 		m_acceptor.getFilterChain().addLast("logger", new LoggingFilter());
 	}
 	
-	protected void setupThreadsFilter() {
+	public void setupThreadsFilter() {
 		m_acceptor.getFilterChain().addLast("threads", new ExecutorFilter(Executors.newCachedThreadPool()));
 	}
 	
-	protected void setupCodecFilter() {
+	public void setupCodecFilter() {
 		PrefixedStringCodecFactory codfilter = new PrefixedStringCodecFactory(Charset.forName(m_serviceconf.codeflterEncoding()));
 		codfilter.setEncoderPrefixLength(m_serviceconf.codeflterEncodePrefix());
 		codfilter.setDecoderPrefixLength(m_serviceconf.codeflterDecodePrefix());
 		m_acceptor.getFilterChain().addLast("codec", new ProtocolCodecFilter(codfilter));
 	}
 	
-	protected void setupKeepaliveFilter() {
+	public void setupKeepaliveFilter() {
 		KeepAliveFilter servKeepAliveFilterFactory = new KeepAliveFilter(new HsmKeepAliveFilterFactory(), IdleStatus.BOTH_IDLE);
 		servKeepAliveFilterFactory.setRequestInterval(m_serviceconf.keepaliveInterval());
 		servKeepAliveFilterFactory.setRequestTimeout(m_serviceconf.keepaliveTimeout());
@@ -156,7 +156,7 @@ public class ServiceSocket extends IoSocket {
 	}
 	
 	public void listen() throws IOException {
-		m_acceptor.addListener(new ServiceListener());
+		m_acceptor.addListener(new ServiceServiceListener());
 		m_acceptor.bind(new InetSocketAddress(m_port));
 		
 		System.out.println("[" + m_port + "]service started..");

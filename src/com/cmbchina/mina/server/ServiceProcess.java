@@ -1,15 +1,11 @@
 package com.cmbchina.mina.server;
 
-import java.io.IOException;
-
-import com.cmbchina.mina.client.HsmClientPool;
 import com.cmbchina.mina.client.HsmPoolFactory;
-import com.cmbchina.mina.utils.GlobalVars;
-import com.cmbchina.mina.utils.JSONUtil;
+import com.cmbchina.mina.interfaces.factory.AppMngrFactory;
 
 public class ServiceProcess {
-	private static void initialize() throws IOException {
-		;
+	private static void initialize() throws Exception {
+		AppMngrFactory.init();
 	}
 	
 	private static void startHsmService() throws Exception {

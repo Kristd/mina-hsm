@@ -9,10 +9,10 @@ import com.cmbchina.mina.utils.GlobalVars;
 import com.cmbchina.mina.utils.JSONUtil;
 
 public class HsmPoolFactory {
-	static AppJSONConf m_appconf;
+	private static AppJSONConf m_appconf;
 	private static final Map<String, HsmClientPool> m_hashmap = new ConcurrentHashMap<String, HsmClientPool>();
 	
-	private HsmPoolFactory() {
+	static {
 		m_appconf = new AppJSONConf();
 	}
 	

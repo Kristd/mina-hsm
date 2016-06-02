@@ -4,7 +4,7 @@ import java.util.Map;
 
 import com.cmbchina.mina.abstracts.IoPolicy;
 
-public class RoundPolicy implements IoPolicy {
+public class TimesPolicy implements IoPolicy {
 
 	@Override
 	public Object route(Map<?, ?> map, int bound) {

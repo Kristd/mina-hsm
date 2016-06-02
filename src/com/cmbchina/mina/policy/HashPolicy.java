@@ -1,5 +1,15 @@
 package com.cmbchina.mina.policy;
 
-public class HashPolicy {
+import java.util.Map;
+
+import com.cmbchina.mina.abstracts.IoPolicy;
+
+public class HashPolicy implements IoPolicy {
+
+	@Override
+	public Object route(Map<?, ?> map, int bound) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 }
