@@ -1,11 +1,11 @@
 package com.cmbchina.mina.interfaces.pboc;
 
-import com.cmbchina.mina.abstracts.HsmWork;
+import com.cmbchina.mina.abstracts.IoWork;
 import com.cmbchina.mina.interfaces.factory.PBOCWorkMngr;
 import com.cmbchina.mina.proto.HsmRequest;
 import com.cmbchina.mina.proto.HsmResponse;
 
-public class GenCVC implements HsmWork {	
+public class GenCVC implements IoWork {	
 	public static void register() {
 		PBOCWorkMngr.addWork("GenCVC", new GenCVC());
 	}
@@ -17,7 +17,7 @@ public class GenCVC implements HsmWork {
 	}
 
 	@Override
-	public Object response(String response) {
+	public Object response(Object response) {
 		// TODO Auto-generated method stub
 		return null;
 	}

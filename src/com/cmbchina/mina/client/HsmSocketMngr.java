@@ -1,6 +1,7 @@
 package com.cmbchina.mina.client;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.slf4j.Logger;
@@ -29,9 +30,9 @@ public class HsmSocketMngr {
 		m_connections = new ArrayList<HsmSocket>();
 	}
 	
-	public boolean init() throws Exception {
+	public boolean init(HsmClient host) throws Exception {
 		for(int i = 0; i < m_maxconn; i++) {
-			HsmSocket sock = new HsmSocket(m_ip, m_port, m_timeout);
+			HsmSocket sock = new HsmSocket(host, m_ip, m_port, m_timeout);
 			sock.init();
 			m_connections.add(sock);
 		}
@@ -40,8 +41,8 @@ public class HsmSocketMngr {
 		return true;
 	}
 	
-	public boolean start() throws Exception {
-		if(init()) {
+	public boolean start(HsmClient host) throws Exception {
+		if(init(host)) {
 			try {
 				for(int i = 0; i < m_connections.size(); i++){
 					HsmSocket sock = m_connections.get(i);
@@ -66,6 +67,14 @@ public class HsmSocketMngr {
 	
 	public HsmSocket getConnection() {
 		return m_connections.get(0);
+	}
+	
+	public ArrayList<HsmSocket> getConnections() {
+		return m_connections;
+	}
+	
+	public HsmSocket route() {
+		return null;
 	}
 	
 	public void stop() {

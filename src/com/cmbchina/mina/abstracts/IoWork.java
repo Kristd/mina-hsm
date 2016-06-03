@@ -1,9 +1,9 @@
 package com.cmbchina.mina.abstracts;
 
 
-public interface HsmWork {
+public interface IoWork {
 	
 	public String request(Object request);
 	
-	public Object response(String response);
+	public Object response(Object response);
 }

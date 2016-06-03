@@ -92,7 +92,7 @@ public class ServiceSocket implements IoSocket {
 			System.out.println("request=" + request);
 			
 			//pass the request session
-			HsmPoolFactory.loadPoolManager(appname).getHSM().process(session, jobname, request);
+			HsmPoolFactory.loadPoolManager(appname).getHSM().request(session, jobname, request);
 		
 			//WriteFuture future = session.write(response);
 			//future.addListener(new ServiceFutureListener());		//not neccessary

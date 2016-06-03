@@ -5,6 +5,7 @@ import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,11 +44,10 @@ public class HsmSocket extends Observable implements IoSocket {
 	private IoConnector m_connector;
 	private IoSession m_session;
 	private SockStatus m_status;
-	private int m_timeout = 0;	
+	private int m_timeout;
 
 	private Object m_worklock = new Object();
 	private Object m_statlock = new Object();
-	
 	
 	private String m_ip;
 	private int m_port;
@@ -57,16 +57,20 @@ public class HsmSocket extends Observable implements IoSocket {
 	private boolean m_connected = false;
 	private SocketJSONConf m_clientconf;
 	
-	private ConcurrentLinkedQueue<Long> m_dealtimeQueue;
-	private static final int DEALIME_MAX = 5;
-	private static final int MAX_SESSION_ID = 65535;
-	private StatusThread m_statThread;
-	private ArrayList<Observer> m_observer; 
+	private ConcurrentLinkedQueue<Long> m_dealtimeCollect;
+	private static final int DEALTIME_MAX = 5;
+	private static final int RESP_THRESHOLD = 10000;
+	private StatThread m_statThread;
 	
 	private int m_sessionID;
+	private boolean m_tryConnect;
+	private boolean m_realtime;
 	
-	private ConcurrentHashMap<String, IoSession> m_sessionMap;
+	private ConcurrentHashMap<String, HsmMessage> m_messageMap;
+	private HsmClient m_host;
+	
 	private final Logger LOGGER = LoggerFactory.getLogger(HsmSocket.class);
+	
 	
 	private class HsmSockFutureListner implements IoFutureListener {
 		@Override
@@ -79,6 +83,9 @@ public class HsmSocket extends Observable implements IoSocket {
 	        		System.out.println("HsmSockFutureListner connected");
 	        		m_connected = true;
 	        	}
+			}
+			else {
+				m_tryConnect = false;
 			}
 		}
 	}
@@ -94,34 +101,74 @@ public class HsmSocket extends Observable implements IoSocket {
 		public void messageReceived(IoSession session, Object message) throws Exception {
 			System.out.println("message Received=" + message.toString());
 			
-			IoSession _session_ = m_sessionMap.get(message.toString().substring(0, 4));
-			if(_session_ != null) {
-				_session_.write(message.toString());
+			HsmMessage tempMessage = m_messageMap.get(message.toString().substring(0, 4));
+			tempMessage.setEndTimeMS(0);
+			
+			//CHECK should set synchronized
+			m_dealtimeCollect.add(tempMessage.responseConsume());
+			int size = m_dealtimeCollect.size();
+			if(m_dealtimeCollect.size() > DEALTIME_MAX) {
+				for(int i = 0; i < (size - DEALTIME_MAX); i++) {
+					m_dealtimeCollect.poll();
+				}
+				
+				setChanged();
+				notifyObservers();
 			}
+			
+			
+			if(m_host == null) {
+				throw new Exception("host Clent is null");
+			}
+			
+			m_host.response(message.toString());
 	    }
 		
 		public void sessionClosed(IoSession session) throws Exception {
-			System.out.println("session closed");
+			System.out.println("session closed=" + session.getRemoteAddress().toString());
 	    }
 
 	    public void messageSent(IoSession session, Object message) throws Exception {
 	    	System.out.println("message sent=" + message.toString());
+	    	
+	    	HsmMessage tempMessage = new HsmMessage();
+	    	String id = message.toString().substring(0, 4);
+	    	tempMessage.setStartTimeMS(0);
+	    	
+	    	if(m_messageMap.contains(id)) {
+	    		m_messageMap.replace(id, tempMessage);
+	    	}
+	    	else {
+	    		m_messageMap.put(id, tempMessage);
+	    	}
+	    	
+	    	
 	    }
 	}
 	
-	private class StatusThread extends Thread implements Observer {
+	private class StatThread extends Thread implements Observer {
 		boolean m_run = true;
 		
-		public StatusThread() {
+		public StatThread() {
 			super();
 			m_run = false;
 		}
 		
 		public void run() {
-			while(m_run) {
-				synchronized(m_statlock) {
-					if(m_dealtimeQueue.size() == DEALIME_MAX) {
+			long avg = 0;
+			
+			synchronized(m_statlock) {
+				if(m_dealtimeCollect.size() == DEALTIME_MAX) {
+					Iterator<Long> it = m_dealtimeCollect.iterator();
+					while(it.hasNext()) {
+						avg += it.next();
+					}
+					
+					if((avg/DEALTIME_MAX) > RESP_THRESHOLD) {
 						m_status = SockStatus.BUSY;
+					}
+					else {
+						m_status = SockStatus.FREE;
 					}
 				}
 			}
@@ -141,17 +188,20 @@ public class HsmSocket extends Observable implements IoSocket {
 		}
 	}
 	
-	public HsmSocket(String ip, int port, int timeout) {
+	public HsmSocket(HsmClient host, String ip, int port, int timeout) {
 		m_ip = ip;
 		m_port = port;
 		m_timeout = timeout;
+		m_timeout = 0;
 		m_sessionID = 0x0000;
+		m_tryConnect = true;
 		
 		m_connector = new NioSocketConnector();
 		m_clientconf = new SocketJSONConf();
-		m_dealtimeQueue = new ConcurrentLinkedQueue<Long>();
-		m_statThread = new StatusThread();
-		m_sessionMap = new ConcurrentHashMap<String, IoSession>();
+		m_dealtimeCollect = new ConcurrentLinkedQueue<Long>();
+		m_statThread = new StatThread();
+		m_messageMap = new ConcurrentHashMap<String, HsmMessage>();
+		m_host = host;
 	}
 	
 	public boolean init() throws Exception {
@@ -214,29 +264,22 @@ public class HsmSocket extends Observable implements IoSocket {
 		//m_future.awaitUninterruptibly();
 		m_future.addListener(new HsmSockFutureListner());
 		
-		/*
-        if(m_future.isConnected()) {
-        	m_status = Status.FREE;
-        	m_msgsize = 0;
-        }
-		*/
-		
-		while(true) {
+		while(m_tryConnect) {
 			synchronized(m_worklock) {
 				if(m_connected) {
 					m_session = m_future.getSession();
 					m_session.getConfig().setUseReadOperation(true);
 					
 					System.out.println("HsmSocket connected to " + m_ip + ":" + m_port);
-					return m_connected;
+					return true;
 				}
 				else {
-					//System.out.println("HsmSocket not connected");
+					//System.out.println("HsmSocket not connected=" + this.toString());
 				}
 			}
 		}
 		
-		//return false;
+		return false;
 	}
 	
 	protected int disconnect() {
@@ -247,29 +290,36 @@ public class HsmSocket extends Observable implements IoSocket {
 		return 0;
 	}
 	
-	protected int process(IoSession requestSession, String request) {
-		String s = String.format("000%s", Integer.toHexString(m_sessionID).toUpperCase());
-		String ss = s.substring(s.length()-4);
+	protected int process(String request) {
+/*
+		//CHECK should set synchronized
+		String strtempId = String.format("000%s", Integer.toHexString(m_sessionID).toUpperCase());
+		String strId = strtempId.substring(strtempId.length()-4);
 		
-		if(m_sessionMap.containsKey(ss)) {
-			m_sessionMap.replace(ss, requestSession);
+		HsmSession tempSession = new HsmSession();
+		tempSession.setSession(requestSession);
+		tempSession.setSessionID(strId);
+		
+		if(m_sessionMap.containsKey(strId)) {
+			m_sessionMap.replace(strId, tempSession);
 		}
 		else {
-			m_sessionMap.put(ss, requestSession);
+			m_sessionMap.put(strId, tempSession);
 		}
 		
-		request = ss + request.substring(4, request.length());
-		
+		request = strId + request.substring(4, request.length());
+*/		
 		WriteFuture wfuture = m_session.write(request);
 		wfuture.addListener(new HsmSockFutureListner());
-		
+
+/*
 		if(m_sessionID == MAX_SESSION_ID) {
 			m_sessionID = 0x0000;
 		}
 		else {
 			m_sessionID += 1;
 		}
-		
+*/		
 		return request.length();
 	}
 	

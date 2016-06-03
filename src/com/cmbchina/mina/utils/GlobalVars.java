@@ -17,4 +17,5 @@ public class GlobalVars {
 	public static final int DEFAULT_INTERVAL_SECOND = 9999;
 	public static final int DEFAULT_TIMEOUT_SECOND = 9999;
 	public static final int DEFAULT_MAX_CONNECT = 5;
+	public static final int MAX_SESSION_ID = 65535;
 }

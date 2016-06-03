@@ -1,8 +1,5 @@
 package com.cmbchina.mina.filter.keepalive;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.keepalive.KeepAliveMessageFactory;
 

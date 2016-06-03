@@ -3,7 +3,7 @@ package com.cmbchina.mina.interfaces.factory;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.cmbchina.mina.abstracts.HsmWorkManager;
+import com.cmbchina.mina.abstracts.IoWorkManager;
 import com.cmbchina.mina.client.HsmClientPool;
 import com.cmbchina.mina.conf.AppJSONConf;
 import com.cmbchina.mina.server.ResourceMngr;
@@ -12,7 +12,7 @@ import com.cmbchina.mina.utils.JSONUtil;
 
 
 public class AppMngrFactory {
-	private static final Map<String, HsmWorkManager> m_hashmap = new ConcurrentHashMap<String, HsmWorkManager>();
+	private static final Map<String, IoWorkManager> m_hashmap = new ConcurrentHashMap<String, IoWorkManager>();
 	private static AppJSONConf m_appconf;
 	
 	static {
@@ -27,13 +27,13 @@ public class AppMngrFactory {
 			String classPath = m_appconf.getClassPath(i);
 			
 			//HsmWorkManager manager = (HsmWorkManager) Class.forName(classPath).getMethod("instance", null).invoke(null, null);
-			m_hashmap.put(appname, (HsmWorkManager) Class.forName(classPath).getMethod("instance", null).invoke(null, null));
+			m_hashmap.put(appname, (IoWorkManager) Class.forName(classPath).getMethod("instance", null).invoke(null, null));
 		}
 		
 		return true;
 	}
 	
-	public static HsmWorkManager loadWorkManager(String appname) {
+	public static IoWorkManager loadWorkManager(String appname) {
 		return m_hashmap.get(appname);
 	}
 }

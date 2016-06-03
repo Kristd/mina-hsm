@@ -36,7 +36,8 @@ public class HsmClientPool {
 	}
 	
 	public boolean init() throws Exception {
-		boolean isloaded = m_hsmConf.loadObject(JSONUtil.parserJSONArray(ResourceMngr.getServiceConfigData(GlobalVars.HSMPOOL_CFG)));
+		boolean isloaded = m_hsmConf.loadObject(JSONUtil.parserJSONArray(
+				ResourceMngr.getServiceConfigData(GlobalVars.HSMPOOL_CFG)));
 
 		for(int n = 0; n < m_hsmConf.getAppSize(); n++) {
 			String appname = m_hsmConf.apps(n).getAppName();
@@ -131,6 +132,10 @@ public class HsmClientPool {
 		else {
 			return getHSM(m_appname, 0);
 		}
+	}
+	
+	public HsmClient route() {
+		return null;
 	}
 	
 	public void stop() throws Exception {
