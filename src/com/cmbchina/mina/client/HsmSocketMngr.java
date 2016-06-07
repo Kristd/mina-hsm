@@ -61,6 +61,10 @@ public class HsmSocketMngr {
 		return false;
 	}
 	
+	public HsmSocket availableConnection() {
+		return m_connections.get(0);
+	}
+	
 	public int freeConnection() {
 		return 0;
 	}

@@ -32,7 +32,7 @@ public class HsmClientPool {
 		m_appGrp = new ConcurrentHashMap<String, Map<String, HsmClient>>();
 		m_lastHsm = "0";
 		m_appname = appname;
-		m_policy = new RandomPolicy();
+		//m_policy = new RandomPolicy();
 	}
 	
 	public boolean init() throws Exception {
@@ -127,7 +127,7 @@ public class HsmClientPool {
 	public HsmClient getHSM() throws Exception {
 		if(m_appGrp.get(m_appname).size() > 1) {
 			Map<String, HsmClient> map = m_appGrp.get(m_appname);
-			return (HsmClient) m_policy.route(map, map.size());
+			return (HsmClient) m_policy.route();
 		}
 		else {
 			return getHSM(m_appname, 0);

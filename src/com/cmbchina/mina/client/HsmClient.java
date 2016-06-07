@@ -66,6 +66,10 @@ public class HsmClient {
 		}
 	}
 	
+	public HsmClient() {
+		return;
+	}
+	
 	public HsmClient(String appname, String ip, int port, int timeout, int maxconn) {
 		m_appname = appname;
 		m_ip = ip;

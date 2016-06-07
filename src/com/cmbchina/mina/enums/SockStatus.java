@@ -16,9 +16,9 @@ public enum SockStatus {
 			return "BUSY";
 		}
 	}, 
-	ERROR {
+	DOWN {
 		public String toString() {
-			return "ERROR";
+			return "DOWN";
 		}
 	}
 }
