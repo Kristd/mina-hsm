@@ -16,7 +16,7 @@
 	},
 	{
 		"threadpool":"true",
-		"pooltype":"newCachedThreadPool"	
+		"pooltype":"newCachedThreadPool"
 	},	
 	{
 		"keepalive":"false",

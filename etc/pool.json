@@ -4,14 +4,21 @@
 		{
 			"ipaddr":"99.12.115.1",
 			"port":"8",
-			"maxconn":"1",
+			"maxconn":"2",
 			"minconn":"1",
 			"timeout":"5"
 		},
 		{
 			"ipaddr":"99.12.115.2",
 			"port":"8",
-			"maxconn":"1",
+			"maxconn":"2",
+			"minconn":"1",
+			"timeout":"5"
+		},
+		{
+			"ipaddr":"99.12.115.7",
+			"port":"8",
+			"maxconn":"2",
 			"minconn":"1",
 			"timeout":"5"
 		}
@@ -21,7 +28,21 @@
 		{
 			"ipaddr":"99.12.115.7",
 			"port":"8",
-			"maxconn":"1",
+			"maxconn":"2",
+			"minconn":"1",
+			"timeout":"5"
+		},
+		{
+			"ipaddr":"99.12.115.1",
+			"port":"8",
+			"maxconn":"2",
+			"minconn":"1",
+			"timeout":"5"
+		},
+		{
+			"ipaddr":"99.12.115.2",
+			"port":"8",
+			"maxconn":"2",
 			"minconn":"1",
 			"timeout":"5"
 		}

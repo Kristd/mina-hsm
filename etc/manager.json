@@ -1,0 +1,4 @@
+[
+	"PBOC:com.cmbchina.mina.interfaces.factory.PBOCWorkManager",
+	"KMC:com.cmbchina.mina.interfaces.factory.KMCWorkManager"
+]
