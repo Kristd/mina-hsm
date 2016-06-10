@@ -1,4 +1,4 @@
 [
-	"PBOC:com.cmbchina.mina.interfaces.factory.PBOCWorkManager",
-	"KMC:com.cmbchina.mina.interfaces.factory.KMCWorkManager"
+	"PBOC:com.hsm.mina.interfaces.factory.PBOCWorkManager",
+	"KMC:com.hsm.mina.interfaces.factory.KMCWorkManager"
 ]

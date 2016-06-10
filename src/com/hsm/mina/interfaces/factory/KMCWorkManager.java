@@ -4,18 +4,18 @@ import java.util.HashMap;
 
 import com.hsm.mina.abstracts.IoWork;
 import com.hsm.mina.abstracts.IoWorkManager;
-import com.hsm.mina.interfaces.pboc.GenCVC;
+import com.hsm.mina.interfaces.kmc.MakeMAC;
 
 
-public class PBOCWorkMngr implements IoWorkManager {
+public class KMCWorkManager implements IoWorkManager {
 	private static HashMap<String, IoWork> m_workMap = new HashMap<String, IoWork>();
 	
 	static{
-		GenCVC.register();
+		MakeMAC.register();
 	}
 	
 	private static class InstanceHolder {
-		static final IoWorkManager m_instance = new PBOCWorkMngr();
+		static final IoWorkManager m_instance = new KMCWorkManager();
 	}
 	
 	public static IoWorkManager instance() {
@@ -27,12 +27,12 @@ public class PBOCWorkMngr implements IoWorkManager {
 			m_workMap.put(jobName, work);
 		}
 	}
-	
+
 	@Override
 	public String request(String jobName, Object request) {
 		return m_workMap.get(jobName).request(request);
 	}
-	
+
 	@Override
 	public Object response(String jobName, Object response) {
 		return m_workMap.get(jobName).response(response);

@@ -1,11 +1,11 @@
 package com.hsm.mina.interfaces.kmc;
 
 import com.hsm.mina.abstracts.IoWork;
-import com.hsm.mina.interfaces.factory.KMCWorkMngr;
+import com.hsm.mina.interfaces.factory.KMCWorkManager;
 
 public class GenRSA implements IoWork {
 	public static void register() {
-		KMCWorkMngr.addWork("GenRSA", new GenRSA());
+		KMCWorkManager.addWork("GenRSA", new GenRSA());
 	}
 	
 	@Override

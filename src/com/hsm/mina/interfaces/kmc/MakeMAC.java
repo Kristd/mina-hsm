@@ -1,11 +1,11 @@
 package com.hsm.mina.interfaces.kmc;
 
 import com.hsm.mina.abstracts.IoWork;
-import com.hsm.mina.interfaces.factory.KMCWorkMngr;
+import com.hsm.mina.interfaces.factory.KMCWorkManager;
 
 public class MakeMAC implements IoWork {
 	public static void register() {
-		KMCWorkMngr.addWork("MakeMAC", new MakeMAC());
+		KMCWorkManager.addWork("MakeMAC", new MakeMAC());
 	}
 
 	@Override

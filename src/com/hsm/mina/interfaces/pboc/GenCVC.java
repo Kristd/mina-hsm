@@ -1,11 +1,11 @@
 package com.hsm.mina.interfaces.pboc;
 
 import com.hsm.mina.abstracts.IoWork;
-import com.hsm.mina.interfaces.factory.PBOCWorkMngr;
+import com.hsm.mina.interfaces.factory.PBOCWorkManager;
 
 public class GenCVC implements IoWork {	
 	public static void register() {
-		PBOCWorkMngr.addWork("GenCVC", new GenCVC());
+		PBOCWorkManager.addWork("GenCVC", new GenCVC());
 	}
 
 	@Override

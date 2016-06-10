@@ -25,7 +25,7 @@ public class AppMngrFactory {
 			String appname = m_appconf.getClassName(i);
 			String classPath = m_appconf.getClassPath(i);
 			
-			m_hashmap.put(appname, (IoWorkManager) Class.forName(classPath).getMethod("instance", cls).invoke(obj, obj));
+			m_hashmap.put(appname, (IoWorkManager) Class.forName(classPath).getMethod("instance", null).invoke(null, null));
 		}
 		
 		return true;
